@@ -36,21 +36,26 @@ def plan_searches(use_case: str, technology: str, industry: str) -> list:
         industry=industry
     )
 
-    response = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
-        max_tokens=1000,
-        system=SYSTEM_PROMPT,
-        messages=[
-            {"role": "user", "content": prompt}
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-5-20250929",
+            max_tokens=1000,
+            system=SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+    except anthropic.APIError as e:
+        print(f"⚠️ Claude API error during search planning: {e}")
+        return [
+            f"{industry} AI regulations compliance",
+            f"{technology} data retention policy",
+            f"{technology} GDPR compliance"
         ]
-    )
 
-    # Extract the text from Claude's response
     response_text = response.content[0].text
 
-    # Try to parse as JSON array
     try:
-        # Find JSON array in response
         start = response_text.find('[')
         end = response_text.rfind(']') + 1
         json_str = response_text[start:end]
@@ -59,7 +64,6 @@ def plan_searches(use_case: str, technology: str, industry: str) -> list:
         print(f"✅ Planned {len(queries)} searches")
         return queries
     except (json.JSONDecodeError, ValueError, IndexError):
-        # Fallback to default searches if parsing fails
         print("⚠️ Couldn't parse search plan, using defaults")
         return [
             f"{industry} AI regulations compliance",
@@ -118,14 +122,18 @@ def analyze_compliance(use_case: str, technology: str, industry: str, research_f
         research_findings=research_findings
     )
     
-    response = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
-        max_tokens=3000,
-        system=SYSTEM_PROMPT,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-5-20250929",
+            max_tokens=8000,
+            system=SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+    except anthropic.APIError as e:
+        print(f"❌ Claude API error during analysis: {e}")
+        return f"[Analysis failed: Claude API returned an error — {e}. Research data was collected successfully. Please retry.]"
 
     return response.content[0].text
 
@@ -175,7 +183,7 @@ def save_report(result: dict, version: str = "v0.1", output_dir: str | None = No
 
 
 # Function 5: run_analysis() - Orchestrate everything
-def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.1") -> dict:
+def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.2") -> dict:
     """
     Main function to run complete compliance gap analysis.
     
@@ -188,6 +196,13 @@ def run_analysis(use_case: str, technology: str, industry: str, version: str = "
     Returns:
         Dictionary with all analysis results
     """
+    inputs = {"use_case": use_case, "technology": technology, "industry": industry}
+    for field, value in inputs.items():
+        if not value or not value.strip():
+            return {"error": f"Missing required field: {field}"}
+        if len(value) > 500:
+            return {"error": f"Field '{field}' exceeds 500 character limit ({len(value)} chars)"}
+
     print("\n" + "="*60)
     print("🚀 AI COMPLIANCE GAP ANALYZER")
     print("="*60)

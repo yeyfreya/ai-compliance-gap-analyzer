@@ -73,19 +73,17 @@ def format_search_results(search_results: list) -> str:
         Formatted string combing all results
     """
 
-    # Guard clause: handle empty results early
-    if not search_results or 'results' not in search_results:
+    if not search_results:
         return "No search results found"
 
     formatted = []
 
-    for i, result in enumerate(search_results['results'], 1):
+    for i, result in enumerate(search_results, 1):
         formatted.append(f"\n --- Result {i} ---")
         formatted.append(f"Title: {result.get('title', 'N/A')}")
         formatted.append(f"URL: {result.get('url', 'N/A')}")
         formatted.append(f"Content: {result.get('content', 'N/A')}")
 
-    # Join all parts with newlines into one string
     return "\n".join(formatted)
 
 

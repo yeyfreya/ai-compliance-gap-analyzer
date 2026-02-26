@@ -5,6 +5,24 @@ Each version represents an iteration, including what was analyzed, what changed,
 
 ---
 
+## [v0.2] - 2026-02-26 — Bug Fixes & Hardening
+
+### Summary
+Fix all remaining issues from v0.1 baseline analysis: live bugs, missing error
+handling, prompt improvements, and dependency hygiene.
+
+### What Changed
+- **Bug #1 fixed:** `format_search_results()` in `tools.py` — function received a list but treated it as a dict, causing all research data to be silently dropped. Now iterates the list directly.
+- **Bug #2 closed:** Indentation inconsistency in `run_analysis()` — already fixed in prior session.
+- **Bug #15 fixed:** `max_tokens` in `analyze_compliance()` increased from 3000 to 8000 — v0.1 test run confirmed analysis was truncating mid-table.
+- **Bug #3 fixed:** Added `anthropic.APIError` handling to both Claude API calls in `agent.py` — pipeline degrades gracefully instead of crashing on API failures.
+- **Bug #4 fixed:** Input validation on `run_analysis()` — rejects empty/whitespace/overlength inputs with error dict before any API calls are made.
+- **Bug #6 closed:** Bare `except` in `plan_searches()` — already fixed in prior session (catches specific exceptions).
+
+Full details: [docs/iterations/v0.2-bug-fixes.md](docs/iterations/v0.2-bug-fixes.md)
+
+---
+
 ## [v0.1] - 2026-02-25 — Baseline
 
 ### Summary
