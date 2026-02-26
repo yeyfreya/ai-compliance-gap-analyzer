@@ -1,0 +1,36 @@
+---
+description: Pre-commit review checklist — run before helping the user commit
+globs: 
+---
+
+# Pre-Commit Review
+
+When the user asks you to help commit, push, or review files for publishing, run this checklist on all staged files BEFORE committing:
+
+## Security Checks
+- [ ] No API keys, tokens, or secrets in any staged file
+- [ ] No `.env` files staged
+- [ ] No credentials, passwords, or connection strings
+
+## Privacy Checks
+- [ ] No personal email addresses in file contents
+- [ ] No local file paths (`C:\Users\...`, `d:\Freya-ai-agent-projects\...`)
+- [ ] No private data that shouldn't be public
+
+## File Checks
+- [ ] `.gitignore` protects `.env`, `.cursor/` (except rules), and `docs/dev-logs/transcripts/`
+- [ ] No duplicate or unnecessary files staged
+- [ ] No files that belong in `.gitignore` but are being committed
+
+## Code Quality (if code files are staged)
+- [ ] No linter errors introduced
+- [ ] No bare `except:` clauses
+- [ ] No hardcoded secrets or credentials in code
+- [ ] Consistent formatting and indentation
+
+## Documentation (if this is a versioned commit)
+- [ ] `CHANGELOG.md` updated if needed
+- [ ] Iteration doc updated if needed
+- [ ] Dev log summary written for the session
+
+Report findings as a table with Pass/Warning/Fail status for each check.

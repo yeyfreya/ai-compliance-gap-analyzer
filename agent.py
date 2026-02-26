@@ -58,7 +58,7 @@ def plan_searches(use_case: str, technology: str, industry: str) -> list:
 
         print(f"✅ Planned {len(queries)} searches")
         return queries
-    except:
+    except (json.JSONDecodeError, ValueError, IndexError):
         # Fallback to default searches if parsing fails
         print("⚠️ Couldn't parse search plan, using defaults")
         return [
@@ -131,12 +131,13 @@ def analyze_compliance(use_case: str, technology: str, industry: str, research_f
 
 
 # Function 4: save_report() - Persist results to a file
-def save_report(result: dict, output_dir: str | None = None) -> str:
+def save_report(result: dict, version: str = "v0.1", output_dir: str | None = None) -> str:
     """
     Save the analysis report to a timestamped file named after the use case.
 
     Args:
         result: Dictionary returned by run_analysis()
+        version: Code version tag (e.g., "v0.1", "v0.2")
         output_dir: Directory to save in (defaults to this script's directory)
 
     Returns:
@@ -150,11 +151,12 @@ def save_report(result: dict, output_dir: str | None = None) -> str:
 
     slug = re.sub(r'[^a-z0-9]+', '-', result['use_case'].lower()).strip('-')
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"report_{slug}_{timestamp}.md"
+    filename = f"report_{version}_{slug}_{timestamp}.md"
     filepath = os.path.join(reports_dir, filename)
 
     header = (
         f"# Compliance Gap Analysis Report\n\n"
+        f"**Version:** {version}  \n"
         f"**Use Case:** {result['use_case']}  \n"
         f"**Technology:** {result['technology']}  \n"
         f"**Industry:** {result['industry']}  \n"
@@ -173,7 +175,7 @@ def save_report(result: dict, output_dir: str | None = None) -> str:
 
 
 # Function 5: run_analysis() - Orchestrate everything
-def run_analysis(use_case: str, technology: str, industry: str) -> dict:
+def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.1") -> dict:
     """
     Main function to run complete compliance gap analysis.
     
@@ -181,6 +183,7 @@ def run_analysis(use_case: str, technology: str, industry: str) -> dict:
         use_case: What the AI system does
         technology: Technology being used  
         industry: Industry context
+        version: Code version tag for report naming (e.g., "v0.1")
         
     Returns:
         Dictionary with all analysis results
@@ -193,13 +196,13 @@ def run_analysis(use_case: str, technology: str, industry: str) -> dict:
     print(f"Technology: {technology}")
     print(f"Industry: {industry}")
 
-     # Step 1: Plan searches
+    # Step 1: Plan searches
     search_queries = plan_searches(use_case, technology, industry)
 
-     # Step 2: Conduct research
+    # Step 2: Conduct research
     research_findings = conduct_research(search_queries)
 
-     # Step 3: Analyze compliance
+    # Step 3: Analyze compliance
     analysis = analyze_compliance(use_case, technology, industry, research_findings)
 
     print("\n" + "="*60)
@@ -214,7 +217,7 @@ def run_analysis(use_case: str, technology: str, industry: str) -> dict:
         'analysis': analysis
     }
 
-    save_report(result)
+    save_report(result, version=version)
     return result
 
 

@@ -1,0 +1,18 @@
+---
+description: Project documentation conventions — read before making any changes
+alwaysApply: true
+---
+
+# Documentation System
+
+This project has a strict documentation system. Before doing any work:
+
+1. Read `docs/DOCUMENTATION-GUIDE.md` for the full documentation structure, naming conventions, and workflow
+2. Read the latest file in `docs/iterations/` to understand the current version and known issues
+3. Read `CHANGELOG.md` for version history
+
+After completing work:
+- Update the current iteration doc in `docs/iterations/` with any changes, test results, or new findings
+- Write a dev log summary in `docs/dev-logs/` following the naming format: `v<VERSION>_<YYYY-MM-DD>_<short-topic>.md`
+- Update `CHANGELOG.md` if a new version was created
+- Remind the user to export the chat transcript from Cursor into `docs/dev-logs/transcripts/`

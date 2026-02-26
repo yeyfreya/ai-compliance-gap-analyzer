@@ -22,6 +22,8 @@ ENV/
 # IDE
 .vscode/
 .idea/
+.cursor/*
+!.cursor/rules/
 *.swp
 *.swo
 *~
@@ -30,6 +32,9 @@ ENV/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Chat transcripts (kept locally, not published)
+docs/dev-logs/transcripts/
 
 # Streamlit
 .streamlit/secrets.toml
