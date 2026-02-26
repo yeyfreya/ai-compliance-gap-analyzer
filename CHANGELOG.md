@@ -5,13 +5,14 @@ Each version represents an iteration, including what was analyzed, what changed,
 
 ---
 
-## [v0.2] - 2026-02-26 — Bug Fixes & Hardening
+## [v0.2] - 2026-02-26 — Bug Fixes, Hardening & Observability
 
 ### Summary
-Fix all remaining issues from v0.1 baseline analysis: live bugs, missing error
-handling, prompt improvements, and dependency hygiene.
+Fixed all critical/high bugs from v0.1 baseline. Added test scenario runner, per-step
+timing, and centralized performance logging — the project's first AI observability layer.
+Tested across 4 diverse regulatory scenarios (HR, Healthcare, Fintech, Education).
 
-### What Changed
+### What Changed — Bug Fixes (Session 1)
 - **Bug #1 fixed:** `format_search_results()` in `tools.py` — function received a list but treated it as a dict, causing all research data to be silently dropped. Now iterates the list directly.
 - **Bug #2 closed:** Indentation inconsistency in `run_analysis()` — already fixed in prior session.
 - **Bug #15 fixed:** `max_tokens` in `analyze_compliance()` increased from 3000 to 8000 — v0.1 test run confirmed analysis was truncating mid-table.
@@ -19,7 +20,17 @@ handling, prompt improvements, and dependency hygiene.
 - **Bug #4 fixed:** Input validation on `run_analysis()` — rejects empty/whitespace/overlength inputs with error dict before any API calls are made.
 - **Bug #6 closed:** Bare `except` in `plan_searches()` — already fixed in prior session (catches specific exceptions).
 
-Full details: [docs/iterations/v0.2-bug-fixes.md](docs/iterations/v0.2-bug-fixes.md)
+### What Changed — Test & Observability (Session 2)
+- **Test scenarios:** Added `TEST_SCENARIOS` dict with 4 scenarios + CLI runner (`python agent.py <scenario>`)
+- **Timing:** Per-step timing (planning, research, analysis) in `run_analysis()`, displayed in console output and report header
+- **Test log:** New `append_test_log()` writes to `reports/test-log.csv` after every run — centralized performance tracking across versions
+- **Test results:** All 4 scenarios passed. Analysis phase is the bottleneck (75-85% of total time). Report length varies 266-790 lines by regulatory complexity.
+
+### New Issues Found
+- #16: Analysis prompt doesn't enforce consistent report structure (Medium)
+- #17: Windows GBK encoding error on emoji output (Medium)
+
+Full details: [docs/iterations/v0.2-bug-fixes-and-observability.md](docs/iterations/v0.2-bug-fixes-and-observability.md)
 
 ---
 

@@ -8,6 +8,8 @@ Orchestrates research and analysis workflow.
 import os
 import re
 import json
+import time
+import csv
 from datetime import datetime
 import anthropic
 from dotenv import load_dotenv
@@ -162,13 +164,24 @@ def save_report(result: dict, version: str = "v0.1", output_dir: str | None = No
     filename = f"report_{version}_{slug}_{timestamp}.md"
     filepath = os.path.join(reports_dir, filename)
 
+    timing = result.get('timing', {})
+    timing_line = ""
+    if timing:
+        timing_line = (
+            f"**Generation Time:** {timing['total_sec']}s total "
+            f"(planning: {timing['planning_sec']}s, "
+            f"research: {timing['research_sec']}s, "
+            f"analysis: {timing['analysis_sec']}s)  \n"
+        )
+
     header = (
         f"# Compliance Gap Analysis Report\n\n"
         f"**Version:** {version}  \n"
         f"**Use Case:** {result['use_case']}  \n"
         f"**Technology:** {result['technology']}  \n"
         f"**Industry:** {result['industry']}  \n"
-        f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  \n\n"
+        f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  \n"
+        f"{timing_line}\n"
         f"---\n\n"
         f"## Search Queries Used\n\n"
     )
@@ -211,17 +224,38 @@ def run_analysis(use_case: str, technology: str, industry: str, version: str = "
     print(f"Technology: {technology}")
     print(f"Industry: {industry}")
 
+    total_start = time.time()
+
     # Step 1: Plan searches
+    t0 = time.time()
     search_queries = plan_searches(use_case, technology, industry)
+    time_planning = time.time() - t0
 
     # Step 2: Conduct research
+    t0 = time.time()
     research_findings = conduct_research(search_queries)
+    time_research = time.time() - t0
 
     # Step 3: Analyze compliance
+    t0 = time.time()
     analysis = analyze_compliance(use_case, technology, industry, research_findings)
+    time_analysis = time.time() - t0
+
+    time_total = time.time() - total_start
+
+    timing = {
+        'planning_sec': round(time_planning, 1),
+        'research_sec': round(time_research, 1),
+        'analysis_sec': round(time_analysis, 1),
+        'total_sec': round(time_total, 1),
+    }
 
     print("\n" + "="*60)
     print("✅ ANALYSIS COMPLETE")
+    print(f"⏱️  Total: {timing['total_sec']}s "
+          f"(plan: {timing['planning_sec']}s, "
+          f"research: {timing['research_sec']}s, "
+          f"analysis: {timing['analysis_sec']}s)")
     print("="*60)
     
     result = {
@@ -229,22 +263,88 @@ def run_analysis(use_case: str, technology: str, industry: str, version: str = "
         'technology': technology,
         'industry': industry,
         'search_queries': search_queries,
-        'analysis': analysis
+        'analysis': analysis,
+        'timing': timing,
     }
 
-    save_report(result, version=version)
+    report_path = save_report(result, version=version)
+    append_test_log(result, version=version, report_path=report_path)
     return result
 
 
-# Test code
+# Function 6: append_test_log() - Track performance across runs
+def append_test_log(result: dict, version: str, report_path: str) -> None:
+    """Append one row to reports/test-log.csv after every successful run."""
+    log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, "test-log.csv")
+
+    timing = result.get('timing', {})
+    row = {
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'version': version,
+        'use_case': result['use_case'],
+        'technology': result['technology'],
+        'industry': result['industry'],
+        'num_queries': len(result.get('search_queries', [])),
+        'planning_sec': timing.get('planning_sec', ''),
+        'research_sec': timing.get('research_sec', ''),
+        'analysis_sec': timing.get('analysis_sec', ''),
+        'total_sec': timing.get('total_sec', ''),
+        'report_file': os.path.basename(report_path),
+    }
+
+    file_exists = os.path.exists(log_path)
+    with open(log_path, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=row.keys())
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
+
+    print(f"📊 Test log updated: {log_path}")
+
+
+# Test scenarios
+TEST_SCENARIOS = {
+    "hr": {
+        "use_case": "AI-powered resume screening tool",
+        "technology": "OpenAI GPT-4 API",
+        "industry": "Enterprise HR tech (US-based)",
+    },
+    "healthcare": {
+        "use_case": "AI diagnostic assistant that analyzes medical images and suggests diagnoses",
+        "technology": "Google Gemini API",
+        "industry": "US hospital network (healthcare)",
+    },
+    "fintech": {
+        "use_case": "AI credit scoring model that evaluates loan applications",
+        "technology": "AWS SageMaker",
+        "industry": "UK neobank (financial services)",
+    },
+    "education": {
+        "use_case": "AI essay grading and feedback tool for student assignments",
+        "technology": "Anthropic Claude API",
+        "industry": "US K-12 school district (education)",
+    },
+}
+
 if __name__ == "__main__":
-    result = run_analysis(
-        use_case="AI-powered resume screening tool",
-        technology="OpenAI GPT-4 API",
-        industry="Enterprise HR tech (US-based)"
-    )
-    
-    print("\n" + "="*60)
-    print("COMPLIANCE ANALYSIS REPORT")
-    print("="*60)
-    print(result['analysis'])
+    import sys
+
+    if len(sys.argv) < 2 or sys.argv[1] not in TEST_SCENARIOS:
+        print("Usage: python agent.py <scenario>")
+        print("\nAvailable scenarios:")
+        for key, s in TEST_SCENARIOS.items():
+            print(f"  {key:12s} -- {s['use_case']}")
+        sys.exit(1)
+
+    scenario = TEST_SCENARIOS[sys.argv[1]]
+    result = run_analysis(**scenario)
+
+    if "error" in result:
+        print(f"\n❌ {result['error']}")
+    else:
+        print("\n" + "="*60)
+        print("COMPLIANCE ANALYSIS REPORT")
+        print("="*60)
+        print(result['analysis'])

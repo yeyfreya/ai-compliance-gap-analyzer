@@ -1,0 +1,3 @@
+timestamp,version,use_case,technology,industry,num_queries,planning_sec,research_sec,analysis_sec,total_sec,report_file
+2026-02-26 12:34:07,v0.2,AI credit scoring model that evaluates loan applications,AWS SageMaker,UK neobank (financial services),5,7.7,10.6,102.7,121.0,report_v0.2_ai-credit-scoring-model-that-evaluates-loan-applications_20260226_123407.md
+2026-02-26 12:41:25,v0.2,AI essay grading and feedback tool for student assignments,Anthropic Claude API,US K-12 school district (education),5,9.4,10.5,58.4,78.3,report_v0.2_ai-essay-grading-and-feedback-tool-for-student-assignments_20260226_124125.md

@@ -9,7 +9,7 @@ Any AI agent working on this project should follow these conventions exactly.
 
 ```
 compliance-gap-analyzer/
-├── agent.py                  # Main orchestrator
+├── agent.py                  # Main orchestrator (pipeline + test scenarios + timing)
 ├── tools.py                  # Search tools (Tavily)
 ├── prompts.py                # Prompts sent to Claude
 ├── requirements.txt          # Python dependencies
@@ -21,7 +21,8 @@ compliance-gap-analyzer/
 │   └── pre-commit-review.mdc      # Pre-commit checklist for agents
 │
 ├── reports/                  # Generated compliance analysis reports
-│   └── report_v<VERSION>_<use-case-slug>_<YYYYMMDD_HHMMSS>.md
+│   ├── report_v<VERSION>_<use-case-slug>_<YYYYMMDD_HHMMSS>.md
+│   └── test-log.csv          # Centralized performance log (AI observability)
 │
 └── docs/
     ├── DOCUMENTATION-GUIDE.md    # THIS FILE — how to document everything
@@ -45,7 +46,7 @@ compliance-gap-analyzer/
 ### Naming
 `v<MAJOR>.<MINOR>-<short-description>.md`
 
-Examples: `v0.1-baseline.md`, `v0.2-bug-fixes.md`, `v0.3-prompt-improvements.md`
+Examples: `v0.1-baseline.md`, `v0.2-bug-fixes-and-observability.md`, `v0.3-prompt-improvements.md`
 
 ### Sections (in order)
 
@@ -85,6 +86,7 @@ Examples: `v0.1-baseline.md`, `v0.2-bug-fixes.md`, `v0.3-prompt-improvements.md`
 - Do NOT split into multiple files per version (no separate test-notes or baseline files)
 - Update the file as you work through the version — it grows over time
 - The "Remaining Issues" section becomes the roadmap for the next version
+- **Title must stay accurate across sessions.** If a version spans multiple chat sessions that expand the scope beyond the original title, update the `# v0.X — Short Description` heading (and the filename if needed) to reflect the full scope. Example: `v0.2-bug-fixes.md` became `v0.2-bug-fixes-and-observability.md` after a second session added timing and test logging. Also update any references in `CHANGELOG.md` and dev logs.
 
 ---
 
@@ -134,7 +136,54 @@ Example: `report_v0.1_ai-powered-resume-screening-tool_20260225_155951.md`
 
 ---
 
-## 4. Dev Logs (`docs/dev-logs/`)
+## 4. AI Observability (`reports/test-log.csv`)
+
+**Centralized performance tracking across all runs and versions.**
+
+This is the project's lightweight AI observability layer — tracking how the agent performs
+over time so we can monitor latency, spot regressions, and make data-driven product decisions.
+
+### What Gets Logged
+
+Every successful `run_analysis()` call appends one row to `reports/test-log.csv` with:
+
+| Column | Description |
+|---|---|
+| `timestamp` | When the run completed |
+| `version` | Code version (e.g., `v0.2`) |
+| `use_case` | Input: what the AI system does |
+| `technology` | Input: technology being used |
+| `industry` | Input: industry context |
+| `num_queries` | How many search queries Claude planned |
+| `planning_sec` | Time for Claude to plan searches |
+| `research_sec` | Time for Tavily to execute all searches |
+| `analysis_sec` | Time for Claude to write the analysis |
+| `total_sec` | End-to-end pipeline time |
+| `report_file` | Filename of the generated report |
+
+### How It Works
+
+- `run_analysis()` in `agent.py` wraps each pipeline step with `time.time()` calls
+- Timing is included in the result dict under `result['timing']`
+- `save_report()` writes timing into the report header
+- `append_test_log()` appends a row to the CSV after every run
+
+### Rules
+- The CSV is append-only — never delete rows (they're your historical record)
+- The CSV is tracked in git alongside reports
+- When bumping versions, timing data naturally segments by the `version` column
+
+### Future Growth
+
+This is the starting point. As the project matures, consider:
+- **Cost tracking** — log token usage and estimated API costs per run
+- **Output quality metrics** — report length, number of gaps found, number of recommendations
+- **Error tracking** — log failed runs with error type and which step failed
+- **Dedicated tooling** — migrate to Langfuse, LangSmith, or similar when dashboard/alerting needs arise
+
+---
+
+## 5. Dev Logs (`docs/dev-logs/`)
 
 **One summary per chat session.** Documents questions asked, answers given, and decisions made.
 
@@ -177,7 +226,7 @@ Example: `v0.1_2026-02-25_1711_improve-and-debug.md`
 
 ---
 
-## 5. Chat Transcripts (`docs/dev-logs/transcripts/`)
+## 6. Chat Transcripts (`docs/dev-logs/transcripts/`)
 
 **Full exported chat logs — local only, not published to GitHub.**
 The user exports these directly from Cursor. Remind user to do so.
@@ -196,7 +245,7 @@ Must match the corresponding dev log summary filename with `export_` prepended.
 
 ---
 
-## 6. Git Commit Messages
+## 7. Git Commit Messages
 
 ### Format
 `v<VERSION>: Short description of what changed`
@@ -209,6 +258,23 @@ Examples:
 ### Rules
 - One commit per logical change or per work session
 - The commit message describes the "what" — the iteration doc and dev log describe the "why"
+- **After completing documentation updates, the agent should suggest a commit message** following the format above. This is typically the last step before the user commits and pushes.
+
+### Suggested Commit Message Template
+
+After logging and updating all documentation, suggest a commit message like:
+
+```
+v<VERSION>: <what changed in code> + docs
+```
+
+Examples by session type:
+- **Code changes only:** `v0.2: Fix format_search_results bug and add error handling`
+- **Code + tests:** `v0.2: Add test scenarios, timing, and observability logging`
+- **Docs only (mid-version):** `v0.2: Update iteration doc and changelog for session 2`
+- **Full session (code + docs):** `v0.2: Add timing and test log + docs update`
+
+If a session spans multiple concerns, summarize the biggest changes -- don't list everything. The iteration doc and dev log have the details.
 
 ---
 
@@ -238,7 +304,8 @@ When the user says "let's start v0.X", the agent should:
 5. Update CHANGELOG.md with version summary
 6. Write dev log summary for the chat session
 7. User exports chat transcript from Cursor
-8. Commit and push:
+8. Agent suggests a commit message (see Section 7)
+9. Commit and push:
    ```powershell
    git add .
    git commit -m "v0.X: description"
