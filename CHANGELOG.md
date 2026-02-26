@@ -26,6 +26,13 @@ Tested across 4 diverse regulatory scenarios (HR, Healthcare, Fintech, Education
 - **Test log:** New `append_test_log()` writes to `reports/test-log.csv` after every run — centralized performance tracking across versions
 - **Test results:** All 4 scenarios passed. Analysis phase is the bottleneck (75-85% of total time). Report length varies 266-790 lines by regulatory complexity.
 
+### What Changed — Docs, README & Rename (Session 3)
+- **Documentation system:** Added README update rules (Section 7) to DOCUMENTATION-GUIDE.md with trigger table and workflow integration
+- **Cursor rules synced:** Fixed dev log naming format (added HHMM), added commit message suggestion step
+- **Documentation map:** Created local-only `docs/DOCUMENTATION-SYSTEM-MAP.md` — visual reference for the full documentation system
+- **README updated to v0.2:** Status, architecture diagram, project structure, usage (CLI scenarios), known issues, roadmap, current version
+- **Repo renamed:** `compliance-gap-analyzer` → `ai-compliance-gap-analyzer`; all current-state references updated
+
 ### New Issues Found
 - #16: Analysis prompt doesn't enforce consistent report structure (Medium)
 - #17: Windows GBK encoding error on emoji output (Medium)

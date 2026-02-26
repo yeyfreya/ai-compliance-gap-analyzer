@@ -8,7 +8,7 @@ Any AI agent working on this project should follow these conventions exactly.
 ## Project Structure
 
 ```
-compliance-gap-analyzer/
+ai-compliance-gap-analyzer/
 ├── agent.py                  # Main orchestrator (pipeline + test scenarios + timing)
 ├── tools.py                  # Search tools (Tavily)
 ├── prompts.py                # Prompts sent to Claude
@@ -245,7 +245,45 @@ Must match the corresponding dev log summary filename with `export_` prepended.
 
 ---
 
-## 7. Git Commit Messages
+## 7. README.md (Root)
+
+**The public-facing overview of the project.** Must stay accurate as the project evolves.
+
+### What README.md Contains
+
+- Project status line with current version
+- Overview and architecture diagram
+- Example analysis input/output
+- Tech stack
+- Project structure tree
+- Installation and usage instructions
+- Known Issues section (reflects current version)
+- Roadmap with checked/unchecked items
+- Current version line with link to iteration doc
+
+### When to Update README.md
+
+Update the README whenever any of these change:
+
+| Trigger | What to Update in README |
+|---|---|
+| **New version started** | Status line (`v0.X`), "Current version" line at bottom, Known Issues section |
+| **Bug fixed or feature added** | Known Issues (remove fixed items), Roadmap (check off completed items) |
+| **New file added to project** | Project Structure tree |
+| **Architecture changed** | Overview diagram, Tech stack if applicable |
+| **New known issues found** | Known Issues section |
+| **Repo renamed or clone URL changed** | Installation section (git clone URL) |
+
+### Rules
+- Keep the README concise — it's a landing page, not deep documentation
+- Known Issues should reflect the **current** version only (not historical); link to the iteration doc for the full list
+- Roadmap checkboxes should match actual project state
+- The "Current version" line at the bottom must match the version in `agent.py`
+- When in doubt, update it — a stale README is worse than a slightly verbose one
+
+---
+
+## 8. Git Commit Messages
 
 ### Format
 `v<VERSION>: Short description of what changed`
@@ -278,7 +316,7 @@ If a session spans multiple concerns, summarize the biggest changes -- don't lis
 
 ---
 
-## Version Management
+## 9. Version Management
 
 The current version is defined in one place in code: the `version` default parameter in `run_analysis()` inside `agent.py`.
 
@@ -295,17 +333,18 @@ When the user says "let's start v0.X", the agent should:
 
 ---
 
-## Workflow for Each New Version
+## 10. Workflow for Each New Version
 
 1. Review the previous version's "Remaining Issues" section
 2. Create `docs/iterations/v0.X-description.md` with Goal section
 3. Make code changes — update the iteration doc as you go
 4. Run tests — add Test Results to the iteration doc
 5. Update CHANGELOG.md with version summary
-6. Write dev log summary for the chat session
-7. User exports chat transcript from Cursor
-8. Agent suggests a commit message (see Section 7)
-9. Commit and push:
+6. Update README.md — version status, known issues, roadmap, structure (see Section 7)
+7. Write dev log summary for the chat session
+8. User exports chat transcript from Cursor
+9. Agent suggests a commit message (see Section 8)
+10. Commit and push:
    ```powershell
    git add .
    git commit -m "v0.X: description"
@@ -323,3 +362,4 @@ When starting a new chat on this project:
 4. Follow all naming conventions and file structures above
 5. At the end of the session, write a dev log summary in `docs/dev-logs/`
 6. Update the iteration doc with any new findings or test results
+7. Update `README.md` if version, known issues, roadmap, or project structure changed

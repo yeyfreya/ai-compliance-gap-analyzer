@@ -2,7 +2,7 @@
 
 An intelligent AI agent that analyzes AI implementations for regulatory compliance gaps and risks.
 
-> **Status:** v0.1 — Active development. Command-line pipeline working, web interface planned.
+> **Status:** v0.2 — Active development. CLI pipeline working with test scenarios and timing. Web interface planned.
 
 ## Overview
 
@@ -30,6 +30,9 @@ analyze_compliance() ──► Claude analyzes all findings
     │
     ▼
 save_report() ──► Markdown file saved to reports/
+    │
+    ▼
+append_test_log() ──► Row appended to reports/test-log.csv
 ```
 
 ## Example Analysis
@@ -45,7 +48,7 @@ save_report() ──► Markdown file saved to reports/
 - Compliance gaps (missing bias audit, no candidate disclosure)
 - Specific recommendations (implement bias testing, update disclosures)
 
-A sample report is included in the repo: [`reports/report_v0.1_ai-powered-resume-screening-tool_20260225_155951.md`](reports/report_v0.1_ai-powered-resume-screening-tool_20260225_155951.md)
+Sample reports are included in the repo — see [`reports/`](reports/) for analyses across HR, healthcare, fintech, and education scenarios.
 
 ## Tech Stack
 
@@ -57,16 +60,15 @@ A sample report is included in the repo: [`reports/report_v0.1_ai-powered-resume
 ## Project Structure
 
 ```
-compliance-gap-analyzer/
-├── agent.py              # Main orchestrator (plan → research → analyze → report)
+ai-compliance-gap-analyzer/
+├── agent.py              # Main orchestrator (pipeline + test scenarios + timing)
 ├── tools.py              # Tavily web search and result formatting
 ├── prompts.py            # AI prompts for planning and analysis
-├── test_all.py           # Combined import + API integration test
-├── test_api.py           # Claude API connection test
-├── test_tavily.py        # Tavily search test
 ├── requirements.txt      # Python dependencies
 ├── CHANGELOG.md          # Version history
-├── reports/              # Generated compliance analysis reports (tracked in git)
+├── reports/              # Generated compliance analysis reports
+│   ├── report_v*.md      # Version-tagged markdown reports
+│   └── test-log.csv      # Centralized performance log (AI observability)
 ├── docs/                 # Project documentation
 │   ├── DOCUMENTATION-GUIDE.md   # Documentation conventions
 │   ├── iterations/              # One file per version — full analysis story
@@ -78,8 +80,8 @@ compliance-gap-analyzer/
 
 ```bash
 # Clone repository
-git clone https://github.com/yeyfreya/compliance-gap-analyzer.git
-cd compliance-gap-analyzer
+git clone https://github.com/yeyfreya/ai-compliance-gap-analyzer.git
+cd ai-compliance-gap-analyzer
 
 # Create and activate virtual environment
 python -m venv venv
@@ -101,26 +103,34 @@ TAVILY_API_KEY   = <your-tavily-key>
 
 ## Usage
 
-**Command-line (current):**
+**Run a built-in test scenario:**
 
 ```bash
-python agent.py
+python agent.py <scenario>
 ```
 
-Edit the test scenario at the bottom of `agent.py` to analyze different use cases.
+Available scenarios: `hr`, `healthcare`, `fintech`, `education`
+
+```bash
+python agent.py hr          # AI resume screening — US employment law
+python agent.py healthcare  # AI diagnostics — HIPAA, FDA
+python agent.py fintech     # AI credit scoring — UK FCA, GDPR
+python agent.py education   # AI essay grading — FERPA, COPPA
+```
+
+Each run generates a timestamped report in `reports/` and appends performance data to `reports/test-log.csv`.
 
 **Web interface (coming soon):**
 
 Streamlit UI in development.
 
-## Known Issues (v0.1)
+## Known Issues (v0.2)
 
-- `format_search_results` has a type mismatch bug — research data may be dropped
-- Analysis output can be truncated when Claude produces long responses (`max_tokens` too low)
-- No error handling on API calls — failures crash the pipeline
+- Analysis prompt doesn't enforce consistent report structure — output format varies between runs
 - Linear pipeline only (no research adequacy validation loop yet)
 
-See [v0.1 baseline analysis](docs/iterations/v0.1-baseline.md) for the full list of 14 findings.
+All critical/high bugs from v0.1 (data loss, truncation, missing error handling) have been fixed.
+See [v0.2 iteration doc](docs/iterations/v0.2-bug-fixes-and-observability.md) for full details.
 
 ## Roadmap
 
@@ -129,8 +139,11 @@ See [v0.1 baseline analysis](docs/iterations/v0.1-baseline.md) for the full list
 - [x] Multi-source web search
 - [x] Compliance gap analysis
 - [x] Report persistence with version tagging
-- [ ] Bug fixes (format_search_results type mismatch, max_tokens truncation)
-- [ ] Error handling & input validation
+- [x] Bug fixes (data loss, truncation, error handling)
+- [x] Input validation
+- [x] Test scenario runner with CLI
+- [x] Per-step timing and AI observability logging
+- [ ] Consistent report structure (prompt template enforcement)
 - [ ] Richer analysis output (severity ratings, compliance scores)
 - [ ] Pipeline → agent loop (research adequacy check)
 - [ ] Streamlit web interface
@@ -142,7 +155,7 @@ See [v0.1 baseline analysis](docs/iterations/v0.1-baseline.md) for the full list
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and [docs/iterations/](docs/iterations/) for detailed analysis per version.
 
-**Current version:** v0.1 — Baseline ([full iteration doc](docs/iterations/v0.1-baseline.md))
+**Current version:** v0.2 — Bug Fixes, Hardening & Observability ([full iteration doc](docs/iterations/v0.2-bug-fixes-and-observability.md))
 
 ## License
 

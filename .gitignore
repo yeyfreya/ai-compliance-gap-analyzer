@@ -36,6 +36,9 @@ desktop.ini
 # Chat transcripts (kept locally, not published)
 docs/dev-logs/transcripts/
 
+# Local-only reference docs
+docs/DOCUMENTATION-SYSTEM-MAP.md
+
 # Streamlit
 .streamlit/secrets.toml
 
