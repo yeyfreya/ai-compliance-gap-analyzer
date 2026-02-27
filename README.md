@@ -43,12 +43,13 @@ append_test_log() ──► Row appended to reports/test-log.csv
 - Industry: "Enterprise HR (US-based)"
 
 **Output:**
+- **Risk Prioritization Matrix** — executive summary table with gap, risk level, regulatory impact, implementation difficulty, and priority ranking
 - Applicable regulations (EEOC AI guidance, NYC Local Law 144)
 - Identified risks (bias, data retention, transparency requirements)
 - Compliance gaps (missing bias audit, no candidate disclosure)
-- Specific recommendations (implement bias testing, update disclosures)
+- Actionable recommendations grouped by urgency (immediate, short-term, medium-term)
 
-Sample reports are included in the repo — see [`reports/`](reports/) for analyses across HR, healthcare, fintech, and education scenarios.
+Sample reports are included in the repo — see [`reports/`](reports/) for analyses across HR, healthcare, fintech, education, and RegTech scenarios.
 
 ## Tech Stack
 
