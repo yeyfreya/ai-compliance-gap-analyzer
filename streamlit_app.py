@@ -3,11 +3,21 @@ AI Compliance Gap Analyzer — Streamlit UI
 Live demo interface for the compliance analysis pipeline.
 """
 
+import os
 import streamlit as st
 import streamlit.components.v1 as components
 import time
-import os
 from datetime import datetime
+
+# Streamlit Cloud: inject secrets as env vars before importing agent modules,
+# which create API clients at module level using os.getenv().
+# Locally, .env is loaded by agent.py via dotenv — this block is a no-op.
+for _key in ("ANTHROPIC_API_KEY", "TAVILY_API_KEY"):
+    if _key not in os.environ:
+        try:
+            os.environ[_key] = st.secrets[_key]
+        except (KeyError, FileNotFoundError):
+            pass
 
 from agent import (
     plan_searches,
