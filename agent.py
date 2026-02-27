@@ -196,7 +196,7 @@ def save_report(result: dict, version: str = "v0.1", output_dir: str | None = No
 
 
 # Function 5: run_analysis() - Orchestrate everything
-def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.2") -> dict:
+def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.3") -> dict:
     """
     Main function to run complete compliance gap analysis.
     
@@ -325,6 +325,11 @@ TEST_SCENARIOS = {
         "use_case": "AI essay grading and feedback tool for student assignments",
         "technology": "Anthropic Claude API",
         "industry": "US K-12 school district (education)",
+    },
+    "regtech": {
+        "use_case": "AI agent powered compliance gap analyzer",
+        "technology": "Anthropic Claude Sonnet 4.5",
+        "industry": "RegTech / AI compliance SaaS — serving early-stage AI startups",
     },
 }
 

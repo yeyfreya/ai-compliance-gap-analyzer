@@ -5,6 +5,30 @@ Each version represents an iteration, including what was analyzed, what changed,
 
 ---
 
+## [v0.3] - 2026-02-26 — Streamlit UI & Report Structure
+
+### Summary
+Built a Streamlit web interface for live demo — users can input their AI scenario and
+receive a full compliance gap report through a polished UI. Added mandatory Risk
+Prioritization Matrix as the first section of every report.
+
+### What Changed
+- **Streamlit app** (`streamlit_app.py`): Full web UI with sidebar scenario picker, step-by-step progress tracking, live JS elapsed timer, timing metrics cards, tabbed report/queries view, and markdown download button
+- **Theme** (`.streamlit/config.toml`): Dark theme with blue primary color
+- **Analysis prompt rewrite** (`prompts.py`): Risk Prioritization Matrix enforced as first section; standardized risk levels (CRITICAL/HIGH/MEDIUM/LOW); flexible structure for detailed analysis sections
+- **Bug #17 closed** (`agent.py`): Windows GBK encoding error investigated — only occurs in Cursor's shell runner, not in user's own terminal. Not a code bug; no fix applied
+- **New test scenario** (`agent.py`): `regtech` — the tool analyzing itself (RegTech / AI compliance SaaS)
+- **Timer UX**: Live JS clock counts during analysis, stops on completion with static "Report generated in X:XX"
+
+### Test Results
+- 4 Streamlit test runs: regtech (x2), documentation tool, HR — all passed
+- Analysis time: 48s–185s depending on regulatory complexity and report length
+- Reports: 289–789 lines with structured prompt
+
+Full details: [docs/iterations/v0.3-streamlit-ui.md](docs/iterations/v0.3-streamlit-ui.md)
+
+---
+
 ## [v0.2] - 2026-02-26 — Bug Fixes, Hardening & Observability
 
 ### Summary

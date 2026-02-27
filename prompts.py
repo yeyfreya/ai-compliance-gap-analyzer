@@ -50,12 +50,33 @@ INDUSTRY: {industry}
 
 RESEARCH FINDINGS: {research_findings}
 
-Provide a structured analysis with:
-1. Applicable Regulations (which laws/frameworks apply)
-2. Identified Risks (what could go wrong)
-3. Compliance Gaps (where current setup falls short)
-4. Recommendations (specific actions to take)
+Your report MUST begin with a Risk Prioritization Matrix, then follow with a detailed analysis.
 
-Be specific and cite the research findings."""
+## REQUIRED FIRST SECTION — Risk Prioritization Matrix
+
+Start the report with a markdown table using these exact columns:
+
+| Gap | Risk Level | Regulatory Impact | Implementation Difficulty | Priority |
+
+Rules for the matrix:
+- Risk Level must be one of: CRITICAL, HIGH, MEDIUM, LOW
+- Rows ordered by priority (1 = most urgent)
+- Every compliance gap you identify later in the report must appear as a row here
+- This is the executive summary — readers see it first, before any detail
+
+## DETAILED ANALYSIS
+
+After the matrix, provide a thorough analysis covering at minimum:
+- Applicable regulations and frameworks (cite specific laws/sections)
+- Identified risks (what could go wrong, with research citations)
+- Compliance gaps (where the current setup falls short)
+- Actionable recommendations (specific steps, grouped by urgency when possible)
+
+You may add additional sections where the analysis warrants it (e.g., a conclusion,
+cost estimates, governance recommendations, technical deep-dives). Use your judgment
+on what adds value for this specific scenario.
+
+Be specific and cite the research findings throughout.
+Do not include a report title — the report header is added separately."""
 
 

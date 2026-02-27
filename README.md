@@ -2,7 +2,7 @@
 
 An intelligent AI agent that analyzes AI implementations for regulatory compliance gaps and risks.
 
-> **Status:** v0.2 — Active development. CLI pipeline working with test scenarios and timing. Web interface planned.
+> **Status:** v0.3 — Active development. Streamlit web UI live. CLI pipeline also available.
 
 ## Overview
 
@@ -54,6 +54,7 @@ Sample reports are included in the repo — see [`reports/`](reports/) for analy
 
 - **AI Orchestration:** Claude Sonnet 4.5 (Anthropic API)
 - **Web Research:** Tavily API
+- **Frontend:** Streamlit
 - **Language:** Python 3.14
 - **Architecture:** Multi-step agentic workflow
 
@@ -62,10 +63,13 @@ Sample reports are included in the repo — see [`reports/`](reports/) for analy
 ```
 ai-compliance-gap-analyzer/
 ├── agent.py              # Main orchestrator (pipeline + test scenarios + timing)
+├── streamlit_app.py      # Streamlit web UI
 ├── tools.py              # Tavily web search and result formatting
 ├── prompts.py            # AI prompts for planning and analysis
 ├── requirements.txt      # Python dependencies
 ├── CHANGELOG.md          # Version history
+├── .streamlit/
+│   └── config.toml       # Streamlit theme (dark mode)
 ├── reports/              # Generated compliance analysis reports
 │   ├── report_v*.md      # Version-tagged markdown reports
 │   └── test-log.csv      # Centralized performance log (AI observability)
@@ -103,34 +107,40 @@ TAVILY_API_KEY   = <your-tavily-key>
 
 ## Usage
 
-**Run a built-in test scenario:**
+**Launch the web interface:**
+
+```bash
+python -m streamlit run streamlit_app.py
+```
+
+Opens at `http://localhost:8501`. Pick a preset scenario or enter custom inputs, then click **Run Analysis**.
+
+**Or run from CLI:**
 
 ```bash
 python agent.py <scenario>
 ```
 
-Available scenarios: `hr`, `healthcare`, `fintech`, `education`
+Available scenarios: `hr`, `healthcare`, `fintech`, `education`, `regtech`
 
 ```bash
 python agent.py hr          # AI resume screening — US employment law
 python agent.py healthcare  # AI diagnostics — HIPAA, FDA
 python agent.py fintech     # AI credit scoring — UK FCA, GDPR
 python agent.py education   # AI essay grading — FERPA, COPPA
+python agent.py regtech     # AI compliance analyzer — RegTech SaaS
 ```
 
 Each run generates a timestamped report in `reports/` and appends performance data to `reports/test-log.csv`.
 
-**Web interface (coming soon):**
+## Known Issues (v0.3)
 
-Streamlit UI in development.
-
-## Known Issues (v0.2)
-
-- Analysis prompt doesn't enforce consistent report structure — output format varies between runs
+- Analysis takes 2–3 minutes per report (analysis step is the bottleneck)
+- Report detail sections vary between runs (Risk Prioritization Matrix is fixed; rest is flexible)
 - Linear pipeline only (no research adequacy validation loop yet)
 
-All critical/high bugs from v0.1 (data loss, truncation, missing error handling) have been fixed.
-See [v0.2 iteration doc](docs/iterations/v0.2-bug-fixes-and-observability.md) for full details.
+All critical/high bugs from v0.1–v0.2 have been fixed.
+See [v0.3 iteration doc](docs/iterations/v0.3-streamlit-ui.md) for full details.
 
 ## Roadmap
 
@@ -143,10 +153,10 @@ See [v0.2 iteration doc](docs/iterations/v0.2-bug-fixes-and-observability.md) fo
 - [x] Input validation
 - [x] Test scenario runner with CLI
 - [x] Per-step timing and AI observability logging
-- [ ] Consistent report structure (prompt template enforcement)
-- [ ] Richer analysis output (severity ratings, compliance scores)
+- [x] Streamlit web interface
+- [x] Risk Prioritization Matrix (mandatory first section)
+- [ ] Consistent detailed report structure (full template enforcement)
 - [ ] Pipeline → agent loop (research adequacy check)
-- [ ] Streamlit web interface
 - [ ] PDF report generation
 - [ ] Cloud deployment
 - [ ] OpenClaw plugin version (v2)
@@ -155,7 +165,7 @@ See [v0.2 iteration doc](docs/iterations/v0.2-bug-fixes-and-observability.md) fo
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and [docs/iterations/](docs/iterations/) for detailed analysis per version.
 
-**Current version:** v0.2 — Bug Fixes, Hardening & Observability ([full iteration doc](docs/iterations/v0.2-bug-fixes-and-observability.md))
+**Current version:** v0.3 — Streamlit UI & Report Structure ([full iteration doc](docs/iterations/v0.3-streamlit-ui.md))
 
 ## License
 
