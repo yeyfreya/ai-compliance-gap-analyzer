@@ -12,12 +12,22 @@ from datetime import datetime
 # Streamlit Cloud: inject secrets as env vars before importing agent modules,
 # which create API clients at module level using os.getenv().
 # Locally, .env is loaded by agent.py via dotenv — this block is a no-op.
+_missing = []
 for _key in ("ANTHROPIC_API_KEY", "TAVILY_API_KEY"):
     if _key not in os.environ:
         try:
             os.environ[_key] = st.secrets[_key]
         except (KeyError, FileNotFoundError):
-            pass
+            _missing.append(_key)
+
+if _missing:
+    st.error(
+        f"Missing API keys: **{', '.join(_missing)}**. "
+        "Add them in Streamlit Cloud → Settings → Secrets (TOML format), "
+        "or in a local `.env` file."
+    )
+    st.code('ANTHROPIC_API_KEY = "<your-anthropic-key>"\nTAVILY_API_KEY = "<your-tavily-key>"', language="toml")
+    st.stop()
 
 from agent import (
     plan_searches,

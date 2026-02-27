@@ -2,7 +2,7 @@
 
 An intelligent AI agent that analyzes AI implementations for regulatory compliance gaps and risks.
 
-> **Status:** v0.3 — Active development. Streamlit web UI live. CLI pipeline also available.
+> **Status:** v0.3 — Active development. [**Live Demo**](https://ai-compliance-gap-analyzer.streamlit.app/) available. CLI pipeline also supported.
 
 ## Overview
 
@@ -108,7 +108,9 @@ TAVILY_API_KEY   = <your-tavily-key>
 
 ## Usage
 
-**Launch the web interface:**
+**Try the live demo:** [ai-compliance-gap-analyzer.streamlit.app](https://ai-compliance-gap-analyzer.streamlit.app/)
+
+**Or run locally:**
 
 ```bash
 python -m streamlit run streamlit_app.py
@@ -156,10 +158,11 @@ See [v0.3 iteration doc](docs/iterations/v0.3-streamlit-ui.md) for full details.
 - [x] Per-step timing and AI observability logging
 - [x] Streamlit web interface
 - [x] Risk Prioritization Matrix (mandatory first section)
+- [ ] Usage tracking & report persistence (Supabase)
 - [ ] Consistent detailed report structure (full template enforcement)
 - [ ] Pipeline → agent loop (research adequacy check)
 - [ ] PDF report generation
-- [ ] Cloud deployment
+- [x] Cloud deployment (Streamlit Cloud)
 - [ ] OpenClaw plugin version (v2)
 
 ## Development
