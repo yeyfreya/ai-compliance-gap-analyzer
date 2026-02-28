@@ -10,11 +10,13 @@ This project has a strict documentation system. Before doing any work:
 1. Read `docs/DOCUMENTATION-GUIDE.md` for the full documentation structure, naming conventions, and workflow
 2. Read the latest file in `docs/iterations/` to understand the current version and known issues
 3. Read `CHANGELOG.md` for version history
+4. Read `docs/PROJECT-SCHEMA.md` for the project vision, strategy, and phased plan
 
 After completing work:
 - Update the current iteration doc in `docs/iterations/` with any changes, test results, or new findings
 - Write a dev log summary in `docs/dev-logs/` following the naming format: `v<VERSION>_<YYYY-MM-DD>_<HHMM>_<short-topic>.md`
 - Update `CHANGELOG.md` if a new version was created
-- Update `README.md` if version, known issues, roadmap, or project structure changed (see Section 7 in DOCUMENTATION-GUIDE.md)
-- Suggest a commit message following the format: `v<VERSION>: <what changed> + docs` (see Section 8 in DOCUMENTATION-GUIDE.md)
+- Update `README.md` if version, known issues, roadmap, or project structure changed (see Section 8 in DOCUMENTATION-GUIDE.md)
+- Update `docs/PROJECT-SCHEMA.md` if any strategic decisions were made (new product direction, target users, architectural decisions) — see Section 7 in DOCUMENTATION-GUIDE.md
+- Suggest a commit message following the format: `v<VERSION>: <what changed> + docs` (see Section 9 in DOCUMENTATION-GUIDE.md)
 - Remind the user to export the chat transcript from Cursor into `docs/dev-logs/transcripts/`

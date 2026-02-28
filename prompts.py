@@ -30,8 +30,16 @@ INDUSTRY: {industry}
 
 What 3-5 searches should I run to identify compliance requirements and vendor policies?
 
-Format your response as a JSON array of search queries:
+After the JSON array, include a REASONING section explaining:
+- Why you chose each query (what regulatory gap or risk does it target?)
+- What frameworks or regulations you expect to find
+- Any queries you considered but excluded, and why
+
+Format:
 ["query 1", "query 2", "query 3"]
+
+## Reasoning
+(Your explanation here)
 
 Focus on:
 - Relevant regulations for this industry
@@ -77,6 +85,14 @@ cost estimates, governance recommendations, technical deep-dives). Use your judg
 on what adds value for this specific scenario.
 
 Be specific and cite the research findings throughout.
-Do not include a report title — the report header is added separately."""
+Do not include a report title — the report header is added separately.
+
+## REASONING SECTION (at the end of the report)
+
+After the full analysis, add a final section titled "## Agent Reasoning" that explains:
+- Why you prioritized certain gaps over others in the Risk Prioritization Matrix
+- Which research findings were most influential and why
+- Any compliance areas where the research was insufficient and what additional information would help
+- Key assumptions you made during the analysis and their basis"""
 
 

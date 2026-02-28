@@ -32,5 +32,6 @@ When the user asks you to help commit, push, or review files for publishing, run
 - [ ] `CHANGELOG.md` updated if needed
 - [ ] Iteration doc updated if needed
 - [ ] Dev log summary written for the session
+- [ ] `docs/PROJECT-SCHEMA.md` updated if strategic decisions were made
 
 Report findings as a table with Pass/Warning/Fail status for each check.

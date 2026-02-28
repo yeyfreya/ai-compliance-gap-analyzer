@@ -12,13 +12,24 @@ from datetime import datetime
 # Streamlit Cloud: inject secrets as env vars before importing agent modules,
 # which create API clients at module level using os.getenv().
 # Locally, .env is loaded by agent.py via dotenv — this block is a no-op.
+_REQUIRED_KEYS = ("ANTHROPIC_API_KEY", "TAVILY_API_KEY")
+_OPTIONAL_KEYS = ("SUPABASE_URL", "SUPABASE_KEY",
+                   "LANGFUSE_SECRET_KEY", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_HOST")
+
 _missing = []
-for _key in ("ANTHROPIC_API_KEY", "TAVILY_API_KEY"):
+for _key in _REQUIRED_KEYS:
     if _key not in os.environ:
         try:
             os.environ[_key] = st.secrets[_key]
         except (KeyError, FileNotFoundError):
             _missing.append(_key)
+
+for _key in _OPTIONAL_KEYS:
+    if _key not in os.environ:
+        try:
+            os.environ[_key] = st.secrets[_key]
+        except (KeyError, FileNotFoundError):
+            pass
 
 if _missing:
     st.error(
@@ -37,8 +48,15 @@ from agent import (
     append_test_log,
     TEST_SCENARIOS,
 )
+from tracking import (
+    init_session,
+    start_run,
+    complete_run,
+    log_user_event,
+    save_report_to_db,
+)
 
-VERSION = "v0.3"
+VERSION = "v0.4"
 
 st.set_page_config(
     page_title="AI Compliance Gap Analyzer",
@@ -96,6 +114,13 @@ for key in ("result", "report_md", "report_path"):
     if key not in st.session_state:
         st.session_state[key] = None
 
+if "supabase_session_id" not in st.session_state:
+    st.session_state.supabase_session_id = init_session(
+        streamlit_session_id=st.session_state.get("_st_session_id", str(id(st.session_state))),
+        app_version=VERSION,
+    )
+    log_user_event(st.session_state.supabase_session_id, "page_load")
+
 
 # ── Sidebar — inputs ─────────────────────────────────────────────────────────
 with st.sidebar:
@@ -107,6 +132,11 @@ with st.sidebar:
     }
     chosen_label = st.selectbox("Quick-start scenario", list(scenario_options.keys()))
     chosen_key = scenario_options[chosen_label]
+
+    if chosen_key and chosen_key != st.session_state.get("_last_scenario"):
+        st.session_state._last_scenario = chosen_key
+        log_user_event(st.session_state.supabase_session_id, "scenario_selected",
+                       event_data={"scenario": chosen_key})
 
     if chosen_key:
         s = TEST_SCENARIOS[chosen_key]
@@ -163,6 +193,13 @@ if run_btn:
     st.session_state.report_md = None
     st.session_state.report_path = None
 
+    session_id = st.session_state.supabase_session_id
+    scenario_source = chosen_key if chosen_key else "custom"
+
+    run_id = start_run(session_id, use_case, technology, industry, scenario_source, VERSION)
+    log_user_event(session_id, "analysis_started", run_id=run_id,
+                   event_data={"use_case": use_case, "technology": technology, "industry": industry})
+
     total_start = time.time()
 
     status_area = st.container()
@@ -171,7 +208,6 @@ if run_btn:
     with status_area:
         with st.status("Running compliance analysis… (step 1/3)", expanded=True) as status:
 
-            # Start the live JS timer below the status block
             with timer_slot.container():
                 components.html(
                     """
@@ -199,10 +235,11 @@ if run_btn:
                     height=40,
                 )
 
-            # Step 1 — Plan searches
+            # Step 1 — Plan searches (returns dict with queries, thinking, tokens)
             st.write("📋 **Planning research strategy** — asking Claude what to investigate…")
             t0 = time.time()
-            search_queries = plan_searches(use_case, technology, industry)
+            plan_result = plan_searches(use_case, technology, industry)
+            search_queries = plan_result["queries"]
             time_planning = round(time.time() - t0, 1)
             st.write(f"✅ Planned **{len(search_queries)}** search queries ({time_planning}s)")
 
@@ -217,20 +254,20 @@ if run_btn:
 
             status.update(label="Running compliance analysis… (step 3/3)")
 
-            # Step 3 — Analyze compliance (longest step: ~60-100s)
+            # Step 3 — Analyze compliance (returns dict with analysis, thinking, tokens)
             st.write(
                 "🧠 **Analyzing compliance gaps** — Claude is writing the report. "
                 "This is the longest step…"
             )
             t0 = time.time()
-            analysis = analyze_compliance(use_case, technology, industry, research_findings)
+            analysis_result = analyze_compliance(use_case, technology, industry, research_findings)
+            analysis = analysis_result["analysis"]
             time_analysis = round(time.time() - t0, 1)
             st.write(f"✅ Analysis complete ({time_analysis}s)")
 
             time_total = round(time.time() - total_start, 1)
             status.update(label=f"Analysis complete — {time_total}s", state="complete", expanded=False)
 
-    # Replace the live timer with a static completion message
     mins, secs = divmod(int(time_total), 60)
     timer_slot.markdown(f"⏱️ Report generated in **{mins}:{secs:02d}**")
 
@@ -248,13 +285,26 @@ if run_btn:
         "search_queries": search_queries,
         "analysis": analysis,
         "timing": timing,
+        "planning_thinking": plan_result.get("thinking"),
+        "analysis_thinking": analysis_result.get("thinking"),
+        "token_usage": {
+            "planning": {"input": plan_result.get("tokens_in", 0), "output": plan_result.get("tokens_out", 0)},
+            "analysis": {"input": analysis_result.get("tokens_in", 0), "output": analysis_result.get("tokens_out", 0)},
+        },
     }
 
     report_path = save_report(result, version=VERSION)
     append_test_log(result, version=VERSION, report_path=report_path)
 
+    # Persist to Supabase
+    if run_id:
+        complete_run(run_id, timing)
+        save_report_to_db(run_id, analysis, search_queries, os.path.basename(report_path))
+        log_user_event(session_id, "report_viewed", run_id=run_id)
+
     st.session_state.result = result
     st.session_state.report_path = report_path
+    st.session_state.current_run_id = run_id
 
     with open(report_path, "r", encoding="utf-8") as f:
         st.session_state.report_md = f.read()
@@ -302,12 +352,19 @@ if result:
 
     col_dl, col_path = st.columns([1, 3])
     with col_dl:
-        st.download_button(
+        downloaded = st.download_button(
             "⬇️ Download Report (.md)",
             data=st.session_state.report_md,
             file_name=os.path.basename(st.session_state.report_path),
             mime="text/markdown",
         )
+        if downloaded:
+            log_user_event(
+                st.session_state.supabase_session_id,
+                "report_downloaded",
+                run_id=st.session_state.get("current_run_id"),
+                event_data={"filename": os.path.basename(st.session_state.report_path)},
+            )
     with col_path:
         st.caption(f"Saved to `{st.session_state.report_path}`")
 

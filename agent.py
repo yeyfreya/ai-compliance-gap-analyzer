@@ -3,8 +3,6 @@ AI Compliance Gap Analyzer - Main Agent
 Orchestrates research and analysis workflow.
 """
 
-# File setup
-
 import os
 import re
 import json
@@ -13,35 +11,44 @@ import csv
 from datetime import datetime
 import anthropic
 from dotenv import load_dotenv
+from langfuse import observe, get_client as get_langfuse_client
+from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+
 from tools import search_web, format_search_results
 from prompts import SYSTEM_PROMPT, ANALYSIS_PROMPT, SEARCH_PLANNING_PROMPT
 
 load_dotenv()
+
+# Initialize Langfuse (reads LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST from env)
+langfuse = get_langfuse_client()
+AnthropicInstrumentor().instrument()
 
 # Initialize Claude client
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 
 # Function 1: plan_searches() - Ask Claude what to search
-def plan_searches(use_case: str, technology: str, industry: str) -> list:
+@observe()
+def plan_searches(use_case: str, technology: str, industry: str) -> dict:
     """
-    Ask Claude to plan what searches to run.
-    
+    Ask Claude to plan what searches to run, with extended thinking enabled.
+
     Returns:
-        List of search query strings
+        dict with keys: queries (list[str]), thinking (str), tokens_in (int), tokens_out (int)
     """
     print("\n📋 Planning research strategy...")
-    
+
     prompt = SEARCH_PLANNING_PROMPT.format(
-        use_case=use_case, 
-        technology=technology, 
+        use_case=use_case,
+        technology=technology,
         industry=industry
     )
 
     try:
         response = client.messages.create(
             model="claude-sonnet-4-5-20250929",
-            max_tokens=1000,
+            max_tokens=5000,
+            thinking={"type": "enabled", "budget_tokens": 3000},
             system=SYSTEM_PROMPT,
             messages=[
                 {"role": "user", "content": prompt}
@@ -49,13 +56,27 @@ def plan_searches(use_case: str, technology: str, industry: str) -> list:
         )
     except anthropic.APIError as e:
         print(f"⚠️ Claude API error during search planning: {e}")
-        return [
-            f"{industry} AI regulations compliance",
-            f"{technology} data retention policy",
-            f"{technology} GDPR compliance"
-        ]
+        return {
+            "queries": [
+                f"{industry} AI regulations compliance",
+                f"{technology} data retention policy",
+                f"{technology} GDPR compliance"
+            ],
+            "thinking": None,
+            "tokens_in": 0,
+            "tokens_out": 0,
+        }
 
-    response_text = response.content[0].text
+    thinking_text = ""
+    response_text = ""
+    for block in response.content:
+        if block.type == "thinking":
+            thinking_text = block.thinking
+        elif block.type == "text":
+            response_text = block.text
+
+    tokens_in = response.usage.input_tokens
+    tokens_out = response.usage.output_tokens
 
     try:
         start = response_text.find('[')
@@ -64,17 +85,28 @@ def plan_searches(use_case: str, technology: str, industry: str) -> list:
         queries = json.loads(json_str)
 
         print(f"✅ Planned {len(queries)} searches")
-        return queries
+        return {
+            "queries": queries,
+            "thinking": thinking_text,
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
+        }
     except (json.JSONDecodeError, ValueError, IndexError):
         print("⚠️ Couldn't parse search plan, using defaults")
-        return [
-            f"{industry} AI regulations compliance",
-            f"{technology} data retention policy",
-            f"{technology} GDPR compliance"
-        ]
+        return {
+            "queries": [
+                f"{industry} AI regulations compliance",
+                f"{technology} data retention policy",
+                f"{technology} GDPR compliance"
+            ],
+            "thinking": thinking_text,
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
+        }
 
 
-# Function 2: conduct_research() - Execute searches  
+# Function 2: conduct_research() - Execute searches
+@observe()
 def conduct_research(queries: list) -> str:
     """
     Execute searches and compile results.
@@ -102,32 +134,28 @@ def conduct_research(queries: list) -> str:
 
 
 # Function 3: analyze_compliance() - Ask Claude to analyze
-def analyze_compliance(use_case: str, technology: str, industry: str, research_findings: str) -> str:
+@observe()
+def analyze_compliance(use_case: str, technology: str, industry: str, research_findings: str) -> dict:
     """
-    Analyze compliance gaps based on research.
-    
-    Args:
-        use_case: What the AI system does
-        technology: Technology being used
-        industry: Industry context
-        research_findings: Compiled research from conduct_research()
-        
+    Analyze compliance gaps based on research, with extended thinking enabled.
+
     Returns:
-        Structured compliance analysis report
+        dict with keys: analysis (str), thinking (str), tokens_in (int), tokens_out (int)
     """
     print("\n🧠 Analyzing compliance gaps...")
 
     prompt = ANALYSIS_PROMPT.format(
-        use_case=use_case, 
-        technology=technology, 
-        industry=industry, 
+        use_case=use_case,
+        technology=technology,
+        industry=industry,
         research_findings=research_findings
     )
-    
+
     try:
         response = client.messages.create(
             model="claude-sonnet-4-5-20250929",
-            max_tokens=8000,
+            max_tokens=16000,
+            thinking={"type": "enabled", "budget_tokens": 8000},
             system=SYSTEM_PROMPT,
             messages=[
                 {"role": "user", "content": prompt}
@@ -135,9 +163,27 @@ def analyze_compliance(use_case: str, technology: str, industry: str, research_f
         )
     except anthropic.APIError as e:
         print(f"❌ Claude API error during analysis: {e}")
-        return f"[Analysis failed: Claude API returned an error — {e}. Research data was collected successfully. Please retry.]"
+        return {
+            "analysis": f"[Analysis failed: Claude API returned an error — {e}. Research data was collected successfully. Please retry.]",
+            "thinking": None,
+            "tokens_in": 0,
+            "tokens_out": 0,
+        }
 
-    return response.content[0].text
+    thinking_text = ""
+    analysis_text = ""
+    for block in response.content:
+        if block.type == "thinking":
+            thinking_text = block.thinking
+        elif block.type == "text":
+            analysis_text = block.text
+
+    return {
+        "analysis": analysis_text,
+        "thinking": thinking_text,
+        "tokens_in": response.usage.input_tokens,
+        "tokens_out": response.usage.output_tokens,
+    }
 
 
 # Function 4: save_report() - Persist results to a file
@@ -196,18 +242,13 @@ def save_report(result: dict, version: str = "v0.1", output_dir: str | None = No
 
 
 # Function 5: run_analysis() - Orchestrate everything
-def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.3") -> dict:
+@observe()
+def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.4") -> dict:
     """
     Main function to run complete compliance gap analysis.
-    
-    Args:
-        use_case: What the AI system does
-        technology: Technology being used  
-        industry: Industry context
-        version: Code version tag for report naming (e.g., "v0.1")
-        
-    Returns:
-        Dictionary with all analysis results
+
+    Returns dict with: use_case, technology, industry, search_queries, analysis,
+    timing, planning_thinking, analysis_thinking, token_usage.
     """
     inputs = {"use_case": use_case, "technology": technology, "industry": industry}
     for field, value in inputs.items():
@@ -226,9 +267,10 @@ def run_analysis(use_case: str, technology: str, industry: str, version: str = "
 
     total_start = time.time()
 
-    # Step 1: Plan searches
+    # Step 1: Plan searches (returns dict with queries, thinking, tokens)
     t0 = time.time()
-    search_queries = plan_searches(use_case, technology, industry)
+    plan_result = plan_searches(use_case, technology, industry)
+    search_queries = plan_result["queries"]
     time_planning = time.time() - t0
 
     # Step 2: Conduct research
@@ -236,9 +278,10 @@ def run_analysis(use_case: str, technology: str, industry: str, version: str = "
     research_findings = conduct_research(search_queries)
     time_research = time.time() - t0
 
-    # Step 3: Analyze compliance
+    # Step 3: Analyze compliance (returns dict with analysis, thinking, tokens)
     t0 = time.time()
-    analysis = analyze_compliance(use_case, technology, industry, research_findings)
+    analysis_result = analyze_compliance(use_case, technology, industry, research_findings)
+    analysis = analysis_result["analysis"]
     time_analysis = time.time() - t0
 
     time_total = time.time() - total_start
@@ -257,7 +300,7 @@ def run_analysis(use_case: str, technology: str, industry: str, version: str = "
           f"research: {timing['research_sec']}s, "
           f"analysis: {timing['analysis_sec']}s)")
     print("="*60)
-    
+
     result = {
         'use_case': use_case,
         'technology': technology,
@@ -265,6 +308,12 @@ def run_analysis(use_case: str, technology: str, industry: str, version: str = "
         'search_queries': search_queries,
         'analysis': analysis,
         'timing': timing,
+        'planning_thinking': plan_result.get("thinking"),
+        'analysis_thinking': analysis_result.get("thinking"),
+        'token_usage': {
+            'planning': {'input': plan_result.get("tokens_in", 0), 'output': plan_result.get("tokens_out", 0)},
+            'analysis': {'input': analysis_result.get("tokens_in", 0), 'output': analysis_result.get("tokens_out", 0)},
+        },
     }
 
     report_path = save_report(result, version=version)

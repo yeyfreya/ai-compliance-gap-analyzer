@@ -38,6 +38,7 @@ docs/dev-logs/transcripts/
 
 # Local-only reference docs
 docs/DOCUMENTATION-SYSTEM-MAP.md
+docs/PROJECT-SCHEMA.md
 
 # Streamlit
 .streamlit/secrets.toml

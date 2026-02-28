@@ -18,6 +18,7 @@ ai-compliance-gap-analyzer/
 │
 ├── .cursor/rules/            # Cursor rules (committed to git)
 │   ├── documentation-system.mdc   # Auto-read docs before working
+│   ├── no-assumptions.mdc         # Confirm before interpreting user intent
 │   └── pre-commit-review.mdc      # Pre-commit checklist for agents
 │
 ├── reports/                  # Generated compliance analysis reports
@@ -26,6 +27,7 @@ ai-compliance-gap-analyzer/
 │
 └── docs/
     ├── DOCUMENTATION-GUIDE.md    # THIS FILE — how to document everything
+    ├── PROJECT-SCHEMA.md         # LOCAL ONLY — project vision, strategy, sourced quotes
     │
     ├── iterations/               # One file per version — the full story
     │   └── v<VERSION>-<short-description>.md
@@ -245,7 +247,30 @@ Must match the corresponding dev log summary filename with `export_` prepended.
 
 ---
 
-## 7. README.md (Root)
+## 7. Project Schema (`docs/PROJECT-SCHEMA.md`)
+
+**High-level overview of the project vision, strategy, and phased plan — local only, not tracked in git.**
+
+This file summarizes the "big picture" by pulling sourced quotes directly from chat transcripts. It answers: what is this project, who is it for, what's the phased strategy, and what architectural decisions were made and why.
+
+### What It Contains
+
+- What the project is (industry, target users)
+- The phased strategy (demo → temporary Streamlit → independent product or plugin)
+- Key architectural decisions with sourced quotes
+- Version history summary
+- What's next (planned features)
+- Source transcript table (which transcript said what)
+
+### Rules
+- **Local only** — listed in `.gitignore`. Contains sourced quotes from transcripts which may reference personal info.
+- **Updated when the project vision, strategy, or direction changes** — not every session, only when the user makes a strategic decision (new product direction, new target user, new phase started, key architectural decision).
+- **Every claim must have a source** — a direct quote and the transcript filename. Do not infer or assume; only document what the user actually said.
+- **The agent should proactively update this file** when it detects a strategic decision in conversation (e.g., "I want to pivot to...", "my plan is to...", "I'm targeting...").
+
+---
+
+## 8. README.md (Root)
 
 **The public-facing overview of the project.** Must stay accurate as the project evolves.
 
@@ -283,7 +308,7 @@ Update the README whenever any of these change:
 
 ---
 
-## 8. Git Commit Messages
+## 9. Git Commit Messages
 
 ### Format
 `v<VERSION>: Short description of what changed`
@@ -316,7 +341,7 @@ If a session spans multiple concerns, summarize the biggest changes -- don't lis
 
 ---
 
-## 9. Version Management
+## 10. Version Management
 
 The current version is defined in one place in code: the `version` default parameter in `run_analysis()` inside `agent.py`.
 
@@ -333,18 +358,19 @@ When the user says "let's start v0.X", the agent should:
 
 ---
 
-## 10. Workflow for Each New Version
+## 11. Workflow for Each New Version
 
 1. Review the previous version's "Remaining Issues" section
 2. Create `docs/iterations/v0.X-description.md` with Goal section
 3. Make code changes — update the iteration doc as you go
 4. Run tests — add Test Results to the iteration doc
 5. Update CHANGELOG.md with version summary
-6. Update README.md — version status, known issues, roadmap, structure (see Section 7)
-7. Write dev log summary for the chat session
-8. User exports chat transcript from Cursor
-9. Agent suggests a commit message (see Section 8)
-10. Commit and push:
+6. Update README.md — version status, known issues, roadmap, structure (see Section 8)
+7. Update `docs/PROJECT-SCHEMA.md` if any strategic decisions were made (see Section 7)
+8. Write dev log summary for the chat session
+9. User exports chat transcript from Cursor
+10. Agent suggests a commit message (see Section 9)
+11. Commit and push:
    ```powershell
    git add .
    git commit -m "v0.X: description"
@@ -359,7 +385,9 @@ When starting a new chat on this project:
 1. Read this file first
 2. Read the latest `docs/iterations/v0.X-*.md` to understand current state
 3. Read `CHANGELOG.md` for version history overview
-4. Follow all naming conventions and file structures above
-5. At the end of the session, write a dev log summary in `docs/dev-logs/`
-6. Update the iteration doc with any new findings or test results
-7. Update `README.md` if version, known issues, roadmap, or project structure changed
+4. Read `docs/PROJECT-SCHEMA.md` for the project vision and strategic direction
+5. Follow all naming conventions and file structures above
+6. At the end of the session, write a dev log summary in `docs/dev-logs/`
+7. Update the iteration doc with any new findings or test results
+8. Update `README.md` if version, known issues, roadmap, or project structure changed
+9. Update `docs/PROJECT-SCHEMA.md` if any strategic decisions were made during the session

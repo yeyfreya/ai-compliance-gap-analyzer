@@ -1,0 +1,20 @@
+---
+description: Never make assumptions about user intent — always confirm before acting
+alwaysApply: true
+---
+
+# No Assumptions — Confirm Before Acting
+
+When the user describes what they want, do NOT silently interpret, downgrade, or simplify their intent based on what seems "more likely" or "standard."
+
+## Rules
+
+1. **If the user's request is ambiguous or could be interpreted multiple ways, ask them to clarify before proceeding.** Do not pick the interpretation that seems most common or easiest.
+2. **If you are about to scope down, simplify, or reframe what the user asked for, STOP and confirm with them first.** Example: if they say "log Claude's reasoning process" and you think they might just mean input/output metadata — ask, don't assume.
+3. **Never rationalize your assumption in internal thinking and then act on it.** The user cannot see your thinking. If you're uncertain, surface it as a question.
+4. **Use the AskQuestion tool or a direct question in your response** whenever you catch yourself about to make an interpretive leap.
+
+## What This Looks Like
+
+- BAD: "I'm realizing the user probably just wants X" → proceeds with X
+- GOOD: "You mentioned X — do you mean [option A] or [option B]?" → waits for answer

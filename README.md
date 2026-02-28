@@ -2,7 +2,7 @@
 
 An intelligent AI agent that analyzes AI implementations for regulatory compliance gaps and risks.
 
-> **Status:** v0.3 — Active development. [**Live Demo**](https://ai-compliance-gap-analyzer.streamlit.app/) available. CLI pipeline also supported.
+> **Status:** v0.4 — Active development. [**Live Demo**](https://ai-compliance-gap-analyzer.streamlit.app/) available. CLI pipeline also supported.
 
 ## Overview
 
@@ -53,8 +53,10 @@ Sample reports are included in the repo — see [`reports/`](reports/) for analy
 
 ## Tech Stack
 
-- **AI Orchestration:** Claude Sonnet 4.5 (Anthropic API)
+- **AI Orchestration:** Claude Sonnet 4.5 (Anthropic API) with Extended Thinking
 - **Web Research:** Tavily API
+- **AI Observability:** Langfuse (traces, thinking, tokens, cost)
+- **Database:** Supabase (user tracking, report persistence)
 - **Frontend:** Streamlit
 - **Language:** Python 3.14
 - **Architecture:** Multi-step agentic workflow
@@ -63,17 +65,19 @@ Sample reports are included in the repo — see [`reports/`](reports/) for analy
 
 ```
 ai-compliance-gap-analyzer/
-├── agent.py              # Main orchestrator (pipeline + test scenarios + timing)
-├── streamlit_app.py      # Streamlit web UI
+├── agent.py              # Main orchestrator (pipeline + test scenarios + timing + Langfuse)
+├── streamlit_app.py      # Streamlit web UI (user event tracking)
+├── tracking.py           # Supabase tracking (sessions, runs, events, reports)
 ├── tools.py              # Tavily web search and result formatting
-├── prompts.py            # AI prompts for planning and analysis
+├── prompts.py            # AI prompts for planning and analysis (with reasoning)
+├── supabase_schema.sql   # Database schema (run in Supabase SQL Editor)
 ├── requirements.txt      # Python dependencies
 ├── CHANGELOG.md          # Version history
 ├── .streamlit/
 │   └── config.toml       # Streamlit theme (dark mode)
 ├── reports/              # Generated compliance analysis reports
 │   ├── report_v*.md      # Version-tagged markdown reports
-│   └── test-log.csv      # Centralized performance log (AI observability)
+│   └── test-log.csv      # Centralized performance log (local backup)
 ├── docs/                 # Project documentation
 │   ├── DOCUMENTATION-GUIDE.md   # Documentation conventions
 │   ├── iterations/              # One file per version — full analysis story
@@ -136,14 +140,16 @@ python agent.py regtech     # AI compliance analyzer — RegTech SaaS
 
 Each run generates a timestamped report in `reports/` and appends performance data to `reports/test-log.csv`.
 
-## Known Issues (v0.3)
+## Known Issues (v0.4)
 
-- Analysis takes 2–3 minutes per report (analysis step is the bottleneck)
+- Analysis takes 2–3 minutes per report (analysis step is the bottleneck; extended thinking may increase this)
 - Report detail sections vary between runs (Risk Prioritization Matrix is fixed; rest is flexible)
 - Linear pipeline only (no research adequacy validation loop yet)
+- Supabase RLS disabled (acceptable for portfolio project; needs RLS for production)
+- Streamlit Cloud deployment needs updated secrets for Supabase + Langfuse
 
 All critical/high bugs from v0.1–v0.2 have been fixed.
-See [v0.3 iteration doc](docs/iterations/v0.3-streamlit-ui.md) for full details.
+See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for full details.
 
 ## Roadmap
 
@@ -158,7 +164,9 @@ See [v0.3 iteration doc](docs/iterations/v0.3-streamlit-ui.md) for full details.
 - [x] Per-step timing and AI observability logging
 - [x] Streamlit web interface
 - [x] Risk Prioritization Matrix (mandatory first section)
-- [ ] Usage tracking & report persistence (Supabase)
+- [x] Usage tracking & report persistence (Supabase)
+- [x] AI agent observability (Langfuse — traces, extended thinking, tokens, cost)
+- [x] Extended Thinking (Claude's internal reasoning captured and logged)
 - [ ] Consistent detailed report structure (full template enforcement)
 - [ ] Pipeline → agent loop (research adequacy check)
 - [ ] PDF report generation
@@ -169,7 +177,7 @@ See [v0.3 iteration doc](docs/iterations/v0.3-streamlit-ui.md) for full details.
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and [docs/iterations/](docs/iterations/) for detailed analysis per version.
 
-**Current version:** v0.3 — Streamlit UI & Report Structure ([full iteration doc](docs/iterations/v0.3-streamlit-ui.md))
+**Current version:** v0.4 — Supabase + Langfuse Tracking ([full iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md))
 
 ## License
 

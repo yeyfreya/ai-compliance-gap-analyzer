@@ -5,6 +5,28 @@ Each version represents an iteration, including what was analyzed, what changed,
 
 ---
 
+## [v0.4] - 2026-02-27 — Supabase + Langfuse Tracking
+
+### Summary
+Set up comprehensive observability: Langfuse for AI agent tracing (extended thinking,
+token usage, cost, per-step reasoning) and Supabase for user behavior tracking (sessions,
+events, report persistence). Extended Thinking enabled on both Claude calls. Structured
+reasoning prompts added so Claude explains its decision-making in every report.
+
+### What Changed
+- **Extended Thinking** (`agent.py`): Enabled on `plan_searches()` (3k budget) and `analyze_compliance()` (8k budget). Both now return dicts with thinking text, token counts
+- **Langfuse instrumentation** (`agent.py`): `@observe()` decorators on all pipeline functions + `AnthropicInstrumentor` for automatic Claude API tracing
+- **Structured reasoning** (`prompts.py`): Planning prompt asks for query rationale; analysis prompt adds "Agent Reasoning" section to every report
+- **Supabase tracking** (`tracking.py`): New module — fail-safe session/run/event/report tracking via PostgREST
+- **Schema** (`supabase_schema.sql`): 4 tables (sessions, analysis_runs, user_events, reports)
+- **Streamlit updates** (`streamlit_app.py`): User event tracking, Supabase/Langfuse secrets injection, handles new dict return types
+- **Dependencies** (`requirements.txt`): Added `postgrest`, `langfuse>=4.0.0b1`, `opentelemetry-instrumentation-anthropic`
+- **Cursor rule** (`.cursor/rules/no-assumptions.mdc`): AI agent must confirm assumptions with user before acting
+
+Full details: [docs/iterations/v0.4-supabase-langfuse-tracking.md](docs/iterations/v0.4-supabase-langfuse-tracking.md)
+
+---
+
 ## [v0.3] - 2026-02-26 — Streamlit UI & Report Structure
 
 ### Summary
