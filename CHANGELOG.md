@@ -13,7 +13,7 @@ token usage, cost, per-step reasoning) and Supabase for user behavior tracking (
 events, report persistence). Extended Thinking enabled on both Claude calls. Structured
 reasoning prompts added so Claude explains its decision-making in every report.
 
-### What Changed
+### What Changed — Session 1: Observability Setup (2026-02-27)
 - **Extended Thinking** (`agent.py`): Enabled on `plan_searches()` (3k budget) and `analyze_compliance()` (8k budget). Both now return dicts with thinking text, token counts
 - **Langfuse instrumentation** (`agent.py`): `@observe()` decorators on all pipeline functions + `AnthropicInstrumentor` for automatic Claude API tracing
 - **Structured reasoning** (`prompts.py`): Planning prompt asks for query rationale; analysis prompt adds "Agent Reasoning" section to every report
@@ -22,6 +22,17 @@ reasoning prompts added so Claude explains its decision-making in every report.
 - **Streamlit updates** (`streamlit_app.py`): User event tracking, Supabase/Langfuse secrets injection, handles new dict return types
 - **Dependencies** (`requirements.txt`): Added `postgrest`, `langfuse>=4.0.0b1`, `opentelemetry-instrumentation-anthropic`
 - **Cursor rule** (`.cursor/rules/no-assumptions.mdc`): AI agent must confirm assumptions with user before acting
+
+### What Changed — Session 2: Architecture Fix, Correlation, UI Polish & Report Sync (2026-02-28)
+- **Parent Langfuse trace** (`streamlit_app.py`): Extracted pipeline into `@observe(name="compliance_pipeline")` wrapper — all three steps now group under one parent trace instead of creating separate fragmented traces. Tagged with `run_id`/`session_id` via OTel span attributes
+- **Universal correlation key** (`agent.py`, `streamlit_app.py`, `sync_reports.py`): Supabase `run_id` embedded in local report headers, test-log.csv, Langfuse trace metadata, and synced reports — single key to navigate between all systems
+- **Product identity** (`streamlit_app.py`): Removed "Claude" name-drops from pipeline step messages — the agent presents as the product
+- **Time expectations** (`streamlit_app.py`): Timer subtitle now says "Usually 2–3 min · may take longer for complex or region-specific cases"
+- **Report sync** (`sync_reports.py`): New CLI script pulls cloud-generated reports from Supabase to local `reports/` with UTC→local timestamp conversion. Idempotent
+- **Agent rules consolidated** (`.cursor/rules/agent-behavior.mdc`): Combined no-assumptions, root-cause surfacing, and product marketing thinking into one rule. Deleted standalone `no-assumptions.mdc`
+- **CSV column migration** (`agent.py`, `sync_reports.py`): `run_id` column added to test-log.csv with automatic one-time header migration for existing CSVs
+- **Integration tests** (`test_tracking.py`): Expanded from basic connection test to 4-part test suite: Supabase cross-table linkage, Langfuse connection, parent trace architecture (nested spans + metadata), local report correlation (run_id in report header + CSV)
+- **Known non-bug rule** (`.cursor/rules/documentation-system.mdc`): Documented Windows GBK emoji error as Cursor shell bug — agents must not strip emoji from code
 
 Full details: [docs/iterations/v0.4-supabase-langfuse-tracking.md](docs/iterations/v0.4-supabase-langfuse-tracking.md)
 

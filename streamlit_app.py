@@ -4,6 +4,7 @@ Live demo interface for the compliance analysis pipeline.
 """
 
 import os
+import json
 import streamlit as st
 import streamlit.components.v1 as components
 import time
@@ -40,6 +41,9 @@ if _missing:
     st.code('ANTHROPIC_API_KEY = "<your-anthropic-key>"\nTAVILY_API_KEY = "<your-tavily-key>"', language="toml")
     st.stop()
 
+from langfuse import observe, get_client as get_langfuse_client
+from opentelemetry import trace as otel_trace
+
 from agent import (
     plan_searches,
     conduct_research,
@@ -57,6 +61,7 @@ from tracking import (
 )
 
 VERSION = "v0.4"
+_langfuse = get_langfuse_client()
 
 st.set_page_config(
     page_title="AI Compliance Gap Analyzer",
@@ -177,6 +182,118 @@ st.markdown(
 )
 
 
+# ── Pipeline function (Langfuse parent trace) ────────────────────────────────
+
+@observe(name="compliance_pipeline")
+def _run_pipeline(use_case, technology, industry, run_id, session_id, version):
+    """Run the full analysis pipeline under a single Langfuse parent trace.
+
+    All child @observe() functions (plan_searches, conduct_research,
+    analyze_compliance) are automatically nested as spans under this trace.
+    """
+    span = otel_trace.get_current_span()
+    span.set_attribute("session.id", str(session_id or ""))
+    span.set_attribute("langfuse.trace.metadata", json.dumps({
+        "supabase_run_id": str(run_id or ""),
+        "supabase_session_id": str(session_id or ""),
+        "app_version": version,
+    }))
+    span.set_attribute("langfuse.trace.tags", json.dumps(["streamlit", version]))
+
+    langfuse_trace_id = _langfuse.get_current_trace_id()
+
+    total_start = time.time()
+    status_area = st.container()
+    timer_slot = st.empty()
+
+    with status_area:
+        with st.status("Running compliance analysis… (step 1/3)", expanded=True) as status:
+
+            with timer_slot.container():
+                components.html(
+                    """
+                    <div style="display:flex; align-items:center; gap:0.6rem;
+                                font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+                                padding:0.25rem 0 0.5rem; color:#FAFAFA;">
+                        <span style="font-size:1.1rem;">⏱️</span>
+                        <span style="font-variant-numeric:tabular-nums; font-weight:600;"
+                              id="elapsed">0:00</span>
+                        <span style="opacity:0.55; font-size:0.88rem;">
+                            · Usually 2–3 min · may take longer for complex or region-specific cases
+                        </span>
+                    </div>
+                    <script>
+                        const start = Date.now();
+                        const el = document.getElementById('elapsed');
+                        setInterval(() => {
+                            const sec = Math.floor((Date.now() - start) / 1000);
+                            const m = Math.floor(sec / 60);
+                            const s = sec % 60;
+                            el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+                        }, 1000);
+                    </script>
+                    """,
+                    height=40,
+                )
+
+            # Step 1 — Plan searches
+            st.write("📋 **Planning research strategy** — identifying key regulations to investigate…")
+            t0 = time.time()
+            plan_result = plan_searches(use_case, technology, industry)
+            search_queries = plan_result["queries"]
+            time_planning = round(time.time() - t0, 1)
+            st.write(f"✅ Planned **{len(search_queries)}** search queries ({time_planning}s)")
+
+            status.update(label="Running compliance analysis… (step 2/3)")
+
+            # Step 2 — Conduct research
+            st.write("🔬 **Conducting research** — searching the web for regulatory data…")
+            t0 = time.time()
+            research_findings = conduct_research(search_queries)
+            time_research = round(time.time() - t0, 1)
+            st.write(f"✅ Research complete ({time_research}s)")
+
+            status.update(label="Running compliance analysis… (step 3/3)")
+
+            # Step 3 — Analyze compliance
+            st.write(
+                "🧠 **Analyzing compliance gaps** — the agent is cross-referencing findings "
+                "and writing your report. This is the longest step…"
+            )
+            t0 = time.time()
+            analysis_result = analyze_compliance(use_case, technology, industry, research_findings)
+            analysis = analysis_result["analysis"]
+            time_analysis = round(time.time() - t0, 1)
+            st.write(f"✅ Analysis complete ({time_analysis}s)")
+
+            time_total = round(time.time() - total_start, 1)
+            status.update(label=f"Analysis complete — {time_total}s", state="complete", expanded=False)
+
+    mins, secs = divmod(int(time_total), 60)
+    timer_slot.markdown(f"⏱️ Report generated in **{mins}:{secs:02d}**")
+
+    return {
+        "use_case": use_case,
+        "technology": technology,
+        "industry": industry,
+        "search_queries": search_queries,
+        "analysis": analysis,
+        "timing": {
+            "planning_sec": time_planning,
+            "research_sec": time_research,
+            "analysis_sec": time_analysis,
+            "total_sec": time_total,
+        },
+        "planning_thinking": plan_result.get("thinking"),
+        "analysis_thinking": analysis_result.get("thinking"),
+        "token_usage": {
+            "planning": {"input": plan_result.get("tokens_in", 0), "output": plan_result.get("tokens_out", 0)},
+            "analysis": {"input": analysis_result.get("tokens_in", 0), "output": analysis_result.get("tokens_out", 0)},
+        },
+        "langfuse_trace_id": langfuse_trace_id,
+    }
+
+
 # ── Run pipeline ──────────────────────────────────────────────────────────────
 if run_btn:
     # Validate inputs
@@ -200,106 +317,16 @@ if run_btn:
     log_user_event(session_id, "analysis_started", run_id=run_id,
                    event_data={"use_case": use_case, "technology": technology, "industry": industry})
 
-    total_start = time.time()
+    result = _run_pipeline(use_case, technology, industry, run_id, session_id, VERSION)
 
-    status_area = st.container()
-    timer_slot = st.empty()
-
-    with status_area:
-        with st.status("Running compliance analysis… (step 1/3)", expanded=True) as status:
-
-            with timer_slot.container():
-                components.html(
-                    """
-                    <div style="display:flex; align-items:center; gap:0.6rem;
-                                font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-                                padding:0.25rem 0 0.5rem; color:#FAFAFA;">
-                        <span style="font-size:1.1rem;">⏱️</span>
-                        <span style="font-variant-numeric:tabular-nums; font-weight:600;"
-                              id="elapsed">0:00</span>
-                        <span style="opacity:0.55; font-size:0.88rem;">
-                            · This usually takes 2–3 minutes
-                        </span>
-                    </div>
-                    <script>
-                        const start = Date.now();
-                        const el = document.getElementById('elapsed');
-                        setInterval(() => {
-                            const sec = Math.floor((Date.now() - start) / 1000);
-                            const m = Math.floor(sec / 60);
-                            const s = sec % 60;
-                            el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
-                        }, 1000);
-                    </script>
-                    """,
-                    height=40,
-                )
-
-            # Step 1 — Plan searches (returns dict with queries, thinking, tokens)
-            st.write("📋 **Planning research strategy** — asking Claude what to investigate…")
-            t0 = time.time()
-            plan_result = plan_searches(use_case, technology, industry)
-            search_queries = plan_result["queries"]
-            time_planning = round(time.time() - t0, 1)
-            st.write(f"✅ Planned **{len(search_queries)}** search queries ({time_planning}s)")
-
-            status.update(label="Running compliance analysis… (step 2/3)")
-
-            # Step 2 — Conduct research
-            st.write("🔬 **Conducting research** — searching the web via Tavily…")
-            t0 = time.time()
-            research_findings = conduct_research(search_queries)
-            time_research = round(time.time() - t0, 1)
-            st.write(f"✅ Research complete ({time_research}s)")
-
-            status.update(label="Running compliance analysis… (step 3/3)")
-
-            # Step 3 — Analyze compliance (returns dict with analysis, thinking, tokens)
-            st.write(
-                "🧠 **Analyzing compliance gaps** — Claude is writing the report. "
-                "This is the longest step…"
-            )
-            t0 = time.time()
-            analysis_result = analyze_compliance(use_case, technology, industry, research_findings)
-            analysis = analysis_result["analysis"]
-            time_analysis = round(time.time() - t0, 1)
-            st.write(f"✅ Analysis complete ({time_analysis}s)")
-
-            time_total = round(time.time() - total_start, 1)
-            status.update(label=f"Analysis complete — {time_total}s", state="complete", expanded=False)
-
-    mins, secs = divmod(int(time_total), 60)
-    timer_slot.markdown(f"⏱️ Report generated in **{mins}:{secs:02d}**")
-
-    timing = {
-        "planning_sec": time_planning,
-        "research_sec": time_research,
-        "analysis_sec": time_analysis,
-        "total_sec": time_total,
-    }
-
-    result = {
-        "use_case": use_case,
-        "technology": technology,
-        "industry": industry,
-        "search_queries": search_queries,
-        "analysis": analysis,
-        "timing": timing,
-        "planning_thinking": plan_result.get("thinking"),
-        "analysis_thinking": analysis_result.get("thinking"),
-        "token_usage": {
-            "planning": {"input": plan_result.get("tokens_in", 0), "output": plan_result.get("tokens_out", 0)},
-            "analysis": {"input": analysis_result.get("tokens_in", 0), "output": analysis_result.get("tokens_out", 0)},
-        },
-    }
-
-    report_path = save_report(result, version=VERSION)
-    append_test_log(result, version=VERSION, report_path=report_path)
+    report_path = save_report(result, version=VERSION, run_id=run_id)
+    append_test_log(result, version=VERSION, report_path=report_path, run_id=run_id)
 
     # Persist to Supabase
     if run_id:
-        complete_run(run_id, timing)
-        save_report_to_db(run_id, analysis, search_queries, os.path.basename(report_path))
+        complete_run(run_id, result["timing"])
+        save_report_to_db(run_id, result["analysis"], result["search_queries"],
+                          os.path.basename(report_path))
         log_user_event(session_id, "report_viewed", run_id=run_id)
 
     st.session_state.result = result

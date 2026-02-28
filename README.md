@@ -68,6 +68,8 @@ ai-compliance-gap-analyzer/
 ├── agent.py              # Main orchestrator (pipeline + test scenarios + timing + Langfuse)
 ├── streamlit_app.py      # Streamlit web UI (user event tracking)
 ├── tracking.py           # Supabase tracking (sessions, runs, events, reports)
+├── sync_reports.py       # Pull cloud reports from Supabase to local reports/
+├── test_tracking.py      # Integration tests (Supabase, Langfuse, parent trace, run_id)
 ├── tools.py              # Tavily web search and result formatting
 ├── prompts.py            # AI prompts for planning and analysis (with reasoning)
 ├── supabase_schema.sql   # Database schema (run in Supabase SQL Editor)
@@ -142,11 +144,11 @@ Each run generates a timestamped report in `reports/` and appends performance da
 
 ## Known Issues (v0.4)
 
-- Analysis takes 2–3 minutes per report (analysis step is the bottleneck; extended thinking may increase this)
+- Analysis usually takes 2–3 minutes but can exceed 5 minutes for complex or region-specific cases
 - Report detail sections vary between runs (Risk Prioritization Matrix is fixed; rest is flexible)
 - Linear pipeline only (no research adequacy validation loop yet)
 - Supabase RLS disabled (acceptable for portfolio project; needs RLS for production)
-- Streamlit Cloud deployment needs updated secrets for Supabase + Langfuse
+- Streamlit Cloud deployment needs re-deploy after v0.4 Session 2 changes
 
 All critical/high bugs from v0.1–v0.2 have been fixed.
 See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for full details.
@@ -167,6 +169,8 @@ See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for
 - [x] Usage tracking & report persistence (Supabase)
 - [x] AI agent observability (Langfuse — traces, extended thinking, tokens, cost)
 - [x] Extended Thinking (Claude's internal reasoning captured and logged)
+- [x] Cross-service correlation (`run_id` links local reports ↔ Supabase ↔ Langfuse)
+- [x] Cloud report sync (`sync_reports.py` pulls Supabase reports to local)
 - [ ] Consistent detailed report structure (full template enforcement)
 - [ ] Pipeline → agent loop (research adequacy check)
 - [ ] PDF report generation

@@ -187,7 +187,7 @@ def analyze_compliance(use_case: str, technology: str, industry: str, research_f
 
 
 # Function 4: save_report() - Persist results to a file
-def save_report(result: dict, version: str = "v0.1", output_dir: str | None = None) -> str:
+def save_report(result: dict, version: str = "v0.1", output_dir: str | None = None, run_id: str | None = None) -> str:
     """
     Save the analysis report to a timestamped file named after the use case.
 
@@ -195,6 +195,7 @@ def save_report(result: dict, version: str = "v0.1", output_dir: str | None = No
         result: Dictionary returned by run_analysis()
         version: Code version tag (e.g., "v0.1", "v0.2")
         output_dir: Directory to save in (defaults to this script's directory)
+        run_id: Supabase analysis_runs UUID for cross-referencing
 
     Returns:
         Path to the saved report file
@@ -220,9 +221,12 @@ def save_report(result: dict, version: str = "v0.1", output_dir: str | None = No
             f"analysis: {timing['analysis_sec']}s)  \n"
         )
 
+    run_id_line = f"**Run ID:** `{run_id}`  \n" if run_id else ""
+
     header = (
         f"# Compliance Gap Analysis Report\n\n"
         f"**Version:** {version}  \n"
+        f"{run_id_line}"
         f"**Use Case:** {result['use_case']}  \n"
         f"**Technology:** {result['technology']}  \n"
         f"**Industry:** {result['industry']}  \n"
@@ -322,7 +326,15 @@ def run_analysis(use_case: str, technology: str, industry: str, version: str = "
 
 
 # Function 6: append_test_log() - Track performance across runs
-def append_test_log(result: dict, version: str, report_path: str) -> None:
+
+_TEST_LOG_FIELDS = [
+    'timestamp', 'version', 'run_id', 'use_case', 'technology', 'industry',
+    'num_queries', 'planning_sec', 'research_sec', 'analysis_sec', 'total_sec',
+    'report_file',
+]
+
+
+def append_test_log(result: dict, version: str, report_path: str, run_id: str | None = None) -> None:
     """Append one row to reports/test-log.csv after every successful run."""
     log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
     os.makedirs(log_dir, exist_ok=True)
@@ -332,6 +344,7 @@ def append_test_log(result: dict, version: str, report_path: str) -> None:
     row = {
         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'version': version,
+        'run_id': run_id or '',
         'use_case': result['use_case'],
         'technology': result['technology'],
         'industry': result['industry'],
@@ -343,14 +356,34 @@ def append_test_log(result: dict, version: str, report_path: str) -> None:
         'report_file': os.path.basename(report_path),
     }
 
+    if os.path.exists(log_path):
+        with open(log_path, 'r', encoding='utf-8') as f:
+            existing_header = f.readline().strip().split(',')
+        if 'run_id' not in existing_header:
+            _migrate_csv_header(log_path)
+
     file_exists = os.path.exists(log_path)
     with open(log_path, 'a', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=row.keys())
+        writer = csv.DictWriter(f, fieldnames=_TEST_LOG_FIELDS)
         if not file_exists:
             writer.writeheader()
         writer.writerow(row)
 
     print(f"📊 Test log updated: {log_path}")
+
+
+def _migrate_csv_header(log_path: str) -> None:
+    """One-time migration: add run_id column to existing test-log.csv."""
+    with open(log_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        old_rows = list(reader)
+
+    with open(log_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=_TEST_LOG_FIELDS, extrasaction='ignore')
+        writer.writeheader()
+        for old_row in old_rows:
+            old_row.setdefault('run_id', '')
+            writer.writerow(old_row)
 
 
 # Test scenarios

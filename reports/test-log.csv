@@ -1,7 +1,11 @@
-timestamp,version,use_case,technology,industry,num_queries,planning_sec,research_sec,analysis_sec,total_sec,report_file
-2026-02-26 12:34:07,v0.2,AI credit scoring model that evaluates loan applications,AWS SageMaker,UK neobank (financial services),5,7.7,10.6,102.7,121.0,report_v0.2_ai-credit-scoring-model-that-evaluates-loan-applications_20260226_123407.md
-2026-02-26 12:41:25,v0.2,AI essay grading and feedback tool for student assignments,Anthropic Claude API,US K-12 school district (education),5,9.4,10.5,58.4,78.3,report_v0.2_ai-essay-grading-and-feedback-tool-for-student-assignments_20260226_124125.md
-2026-02-26 15:41:21,v0.3,AI agent powered compliance gap analyzer,Claude Sonnet 4.5,Law (US based),5,9.3,12.8,65.9,88.1,report_v0.3_ai-agent-powered-compliance-gap-analyzer_20260226_154121.md
-2026-02-26 16:11:45,v0.3,AI agent powered compliance gap analyzer,Anthropic Claude Sonnet 4.5,RegTech / AI compliance SaaS — serving early-stage AI startups,5,10.7,11.7,184.9,207.3,report_v0.3_ai-agent-powered-compliance-gap-analyzer_20260226_161145.md
-2026-02-26 16:27:56,v0.3,Ai documentation tool,Claude Sonnet 4.5,Tech (US-based),5,9.0,14.2,172.1,195.4,report_v0.3_ai-documentation-tool_20260226_162756.md
-2026-02-26 16:35:19,v0.3,AI-powered resume screening tool,OpenAI GPT-4 API,Enterprise HR tech (US-based),5,9.7,11.7,48.4,69.9,report_v0.3_ai-powered-resume-screening-tool_20260226_163519.md
+timestamp,version,run_id,use_case,technology,industry,num_queries,planning_sec,research_sec,analysis_sec,total_sec,report_file
+2026-02-26 12:34:07,v0.2,,AI credit scoring model that evaluates loan applications,AWS SageMaker,UK neobank (financial services),5,7.7,10.6,102.7,121.0,report_v0.2_ai-credit-scoring-model-that-evaluates-loan-applications_20260226_123407.md
+2026-02-26 12:41:25,v0.2,,AI essay grading and feedback tool for student assignments,Anthropic Claude API,US K-12 school district (education),5,9.4,10.5,58.4,78.3,report_v0.2_ai-essay-grading-and-feedback-tool-for-student-assignments_20260226_124125.md
+2026-02-26 15:41:21,v0.3,,AI agent powered compliance gap analyzer,Claude Sonnet 4.5,Law (US based),5,9.3,12.8,65.9,88.1,report_v0.3_ai-agent-powered-compliance-gap-analyzer_20260226_154121.md
+2026-02-26 16:11:45,v0.3,,AI agent powered compliance gap analyzer,Anthropic Claude Sonnet 4.5,RegTech / AI compliance SaaS — serving early-stage AI startups,5,10.7,11.7,184.9,207.3,report_v0.3_ai-agent-powered-compliance-gap-analyzer_20260226_161145.md
+2026-02-26 16:27:56,v0.3,,Ai documentation tool,Claude Sonnet 4.5,Tech (US-based),5,9.0,14.2,172.1,195.4,report_v0.3_ai-documentation-tool_20260226_162756.md
+2026-02-26 16:35:19,v0.3,,AI-powered resume screening tool,OpenAI GPT-4 API,Enterprise HR tech (US-based),5,9.7,11.7,48.4,69.9,report_v0.3_ai-powered-resume-screening-tool_20260226_163519.md
+2026-02-28 11:22:38,v0.4,,test use case,test tech,test industry,1,1,2,3,6,test_report.md
+2026-02-28 11:47:13,v0.4,,AI agent powered compliance gap analyzer,Anthropic Claude Sonnet 4.5,RegTech / AI compliance SaaS — serving early-stage AI startups,5,35.6,10.2,266.8,312.6,report_v0.4_ai-agent-powered-compliance-gap-analyzer_20260228_194713.md
+2026-02-28 12:04:44,v0.4,,AI-powered resume screening tool,OpenAI GPT-4 API,Enterprise HR tech (US-based),5,34.2,11.2,244,289.5,report_v0.4_ai-powered-resume-screening-tool_20260228_200444.md
+2026-02-28 13:46:12,v0.4,53d0a293-2fc7-45da-af74-8f8ddd3b2748,correlation test,test tech,test industry,1,1.0,2.0,3.0,6.0,report_v0.4_correlation-test_20260228_134612.md

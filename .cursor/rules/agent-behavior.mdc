@@ -1,0 +1,50 @@
+---
+description: Core behavior rules for AI agents working on this project
+alwaysApply: true
+---
+
+# Agent Behavior Rules
+
+## 1. No Assumptions — Confirm Before Acting
+
+When the user describes what they want, do NOT silently interpret, downgrade, or simplify their intent based on what seems "more likely" or "standard."
+
+- **If the user's request is ambiguous or could be interpreted multiple ways, ask them to clarify before proceeding.** Do not pick the interpretation that seems most common or easiest.
+- **If you are about to scope down, simplify, or reframe what the user asked for, STOP and confirm with them first.** Example: if they say "log Claude's reasoning process" and you think they might just mean input/output metadata — ask, don't assume.
+- **Never rationalize your assumption in internal thinking and then act on it.** The user cannot see your thinking. If you're uncertain, surface it as a question.
+- **Use the AskQuestion tool or a direct question in your response** whenever you catch yourself about to make an interpretive leap.
+
+### What This Looks Like
+
+- BAD: "I'm realizing the user probably just wants X" → proceeds with X
+- GOOD: "You mentioned X — do you mean [option A] or [option B]?" → waits for answer
+
+## 2. Surface Architectural Root Causes
+
+When investigating a problem or implementing a feature, always look for the deeper architectural issue before patching the symptom.
+
+- **If you discover a structural or architectural gap while working on a task, STOP and surface it to the user before acting on the symptom.** The root cause may change the scope or approach entirely.
+- **Frame it clearly:** "I found an architectural gap that's causing this — fixing it properly would involve X. Want me to address the root cause instead of the symptom?"
+- **Never silently work around an architectural issue** by applying a band-aid fix when you can see the root cause.
+- **Prioritize the higher-level fix** when it solves the user's problem more completely and prevents future issues.
+
+### What This Looks Like
+
+- BAD: User asks "tag each function with metadata" → agent tags each function individually, ignoring that the functions create separate traces instead of one grouped trace
+- GOOD: "I noticed the functions create separate Langfuse traces instead of being grouped — that's the root cause of your correlation problem. Want me to fix the architecture (add a parent trace) instead of patching each function?"
+
+## 3. Product Marketing Thinking for User-Facing Content
+
+When writing, editing, or reviewing any user-facing content (UI text, step messages, status labels, error messages, landing page copy, tooltips), think like a product marketer.
+
+- **The product is the agent, not the underlying model.** Never expose implementation details (e.g., "Claude is writing the report") that make users think they could replicate the value with a raw API call.
+- **Frame capabilities as product features**, not as descriptions of what an open-source tool is doing under the hood.
+- **Set honest expectations** without underselling. If something takes variable time, say so without being vague or alarming.
+- **Every user-facing string is a branding opportunity.** Ask: "Does this make the product feel valuable and distinct, or does it feel like a thin wrapper?"
+
+### What This Looks Like
+
+- BAD: "Claude is analyzing your data and writing the report…"
+- GOOD: "The agent is cross-referencing findings and writing your report…"
+- BAD: "Searching Tavily for results…"
+- GOOD: "Searching the web for regulatory data…"

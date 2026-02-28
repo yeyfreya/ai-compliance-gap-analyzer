@@ -20,3 +20,7 @@ After completing work:
 - Update `docs/PROJECT-SCHEMA.md` if any strategic decisions were made (new product direction, target users, architectural decisions) — see Section 7 in DOCUMENTATION-GUIDE.md
 - Suggest a commit message following the format: `v<VERSION>: <what changed> + docs` (see Section 9 in DOCUMENTATION-GUIDE.md)
 - Remind the user to export the chat transcript from Cursor into `docs/dev-logs/transcripts/`
+
+## Known Non-Bugs — Do NOT Fix
+
+**Windows emoji / UnicodeEncodeError (GBK codec):** Cursor's built-in agent terminal on Windows fails to render emoji with `UnicodeEncodeError: 'gbk' codec can't encode character`. This is a Cursor shell runner bug, NOT a code bug. The user's own terminal (PowerShell, cmd) handles emoji fine. **Do NOT strip emoji from print statements or replace them with plain text to work around this.** Leave emoji in the code as-is.
