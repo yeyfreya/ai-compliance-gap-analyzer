@@ -9,3 +9,5 @@ timestamp,version,run_id,use_case,technology,industry,num_queries,planning_sec,r
 2026-02-28 11:47:13,v0.4,,AI agent powered compliance gap analyzer,Anthropic Claude Sonnet 4.5,RegTech / AI compliance SaaS — serving early-stage AI startups,5,35.6,10.2,266.8,312.6,report_v0.4_ai-agent-powered-compliance-gap-analyzer_20260228_194713.md
 2026-02-28 12:04:44,v0.4,,AI-powered resume screening tool,OpenAI GPT-4 API,Enterprise HR tech (US-based),5,34.2,11.2,244,289.5,report_v0.4_ai-powered-resume-screening-tool_20260228_200444.md
 2026-02-28 13:46:12,v0.4,53d0a293-2fc7-45da-af74-8f8ddd3b2748,correlation test,test tech,test industry,1,1.0,2.0,3.0,6.0,report_v0.4_correlation-test_20260228_134612.md
+2026-02-28 13:46:07,v0.4,53d0a293-2fc7-45da-af74-8f8ddd3b2748,correlation test,test tech,test industry,1,1,2,3,6,test_correlation_report.md
+2026-02-28 14:28:43,v0.4,5ec4675e-e25d-4a29-95a3-2c850a5f2440,resume screening,my homerun local LLM,ENterprise HR (US based),4,25.8,7.4,189.9,223.1,report_v0.4_resume-screening_20260228_222843.md
