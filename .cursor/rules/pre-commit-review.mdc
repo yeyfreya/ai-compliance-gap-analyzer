@@ -14,7 +14,7 @@ When the user asks you to help commit, push, or review files for publishing, run
 
 ## Privacy Checks
 - [ ] No personal email addresses in file contents
-- [ ] No local file paths (`C:\Users\...`, `d:\Freya-ai-agent-projects\...`)
+- [ ] No local file paths (`C:\Users\<username>\...`, `D:\<projects>\...`)
 - [ ] No private data that shouldn't be public
 
 ## File Checks

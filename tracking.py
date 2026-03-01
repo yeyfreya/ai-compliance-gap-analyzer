@@ -1,5 +1,5 @@
 """
-Supabase tracking for user behavior and report persistence.
+Supabase tracking for user behavior, error logging, and report persistence.
 AI agent observability (steps, thinking, tokens) is handled by Langfuse.
 
 All functions are fail-safe: Supabase errors are logged but never crash the app.
@@ -8,6 +8,7 @@ If SUPABASE_URL / SUPABASE_KEY are missing, tracking is silently disabled.
 
 import os
 import json
+import traceback as tb_module
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -157,3 +158,76 @@ def save_report_to_db(
         "search_queries": json.dumps(search_queries),
         "report_filename": report_filename,
     }).execute()
+
+
+# ── Error logging ─────────────────────────────────────────────────────────────
+
+@_safe
+def log_error(
+    error: Exception,
+    *,
+    session_id: str | None = None,
+    run_id: str | None = None,
+    pipeline_step: str | None = None,
+    user_inputs: dict | None = None,
+    app_version: str = "",
+) -> None:
+    """Persist a structured error record to Supabase for post-incident debugging."""
+    row = {
+        "error_type": type(error).__name__,
+        "error_message": str(error)[:2000],
+        "error_traceback": tb_module.format_exc()[:4000],
+        "app_version": app_version,
+    }
+    if session_id:
+        row["session_id"] = session_id
+    if run_id:
+        row["run_id"] = run_id
+    if pipeline_step:
+        row["pipeline_step"] = pipeline_step
+    if user_inputs:
+        row["user_inputs"] = user_inputs
+
+    _supabase_client.from_("error_logs").insert(row).execute()
+
+
+@_safe
+def mark_run_failed(run_id: str, error: Exception) -> None:
+    """Mark an analysis run as failed with the error message."""
+    _supabase_client.from_("analysis_runs").update({
+        "status": "error",
+        "error_message": str(error)[:2000],
+        "completed_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("id", run_id).execute()
+
+
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+
+MAX_RUNS_PER_SESSION = 3
+
+@_safe
+def check_rate_limit(session_id: str) -> dict:
+    """Check if a session has exceeded the analysis limit.
+
+    Returns {"allowed": True/False, "used": N, "limit": N}.
+    If Supabase is unavailable, defaults to allowing the request.
+    """
+    result = (_supabase_client
+              .from_("analysis_runs")
+              .select("id", count="exact")
+              .eq("session_id", session_id)
+              .execute())
+    used = result.count if result.count is not None else len(result.data)
+    return {
+        "allowed": used < MAX_RUNS_PER_SESSION,
+        "used": used,
+        "limit": MAX_RUNS_PER_SESSION,
+    }
+
+
+def is_rate_limited(session_id: str) -> dict:
+    """Public wrapper — returns rate limit status, defaults to allowed if Supabase is down."""
+    result = check_rate_limit(session_id)
+    if result is None:
+        return {"allowed": True, "used": 0, "limit": MAX_RUNS_PER_SESSION}
+    return result

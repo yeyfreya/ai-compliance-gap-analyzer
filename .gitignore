@@ -40,6 +40,12 @@ docs/dev-logs/transcripts/
 docs/DOCUMENTATION-SYSTEM-MAP.md
 docs/PROJECT-SCHEMA.md
 
+# Reports — keep locally, only showcase examples are tracked
+reports/report_*.md
+!reports/report_v0.5_20260228_2227_4-ai-diagnostic-assistant-that.md
+!reports/report_v0.5_20260228_2229_4-ai-agent-powered-compliance.md
+!reports/report_v0.5_3-ai-credit-scoring-model-that-evaluates-loan-applications_20260228_221051.md
+
 # Streamlit
 .streamlit/secrets.toml
 

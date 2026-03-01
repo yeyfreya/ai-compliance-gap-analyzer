@@ -27,6 +27,35 @@ AnthropicInstrumentor().instrument()
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 
+def _retry_api_call(fn, max_retries=1, backoff_sec=2.0):
+    """Call fn(), retry once on transient API errors with exponential backoff.
+
+    Retries on: rate limits, overloaded, timeouts, connection errors.
+    Does NOT retry on: auth errors, invalid requests, or non-API exceptions.
+    Returns the result of fn() on success, or re-raises the last exception.
+    """
+    last_exc = None
+    for attempt in range(1 + max_retries):
+        try:
+            return fn()
+        except anthropic.RateLimitError as e:
+            last_exc = e
+        except anthropic.InternalServerError as e:
+            last_exc = e
+        except anthropic.APIConnectionError as e:
+            last_exc = e
+        except anthropic.APITimeoutError as e:
+            last_exc = e
+        except Exception:
+            raise
+
+        wait = backoff_sec * (2 ** attempt)
+        print(f"⚠️ API call failed (attempt {attempt + 1}/{1 + max_retries}), retrying in {wait}s…")
+        time.sleep(wait)
+
+    raise last_exc
+
+
 # Function 1: plan_searches() - Ask Claude what to search
 @observe()
 def plan_searches(use_case: str, technology: str, industry: str) -> dict:
@@ -45,7 +74,7 @@ def plan_searches(use_case: str, technology: str, industry: str) -> dict:
     )
 
     try:
-        response = client.messages.create(
+        response = _retry_api_call(lambda: client.messages.create(
             model="claude-sonnet-4-5-20250929",
             max_tokens=5000,
             thinking={"type": "enabled", "budget_tokens": 3000},
@@ -53,7 +82,7 @@ def plan_searches(use_case: str, technology: str, industry: str) -> dict:
             messages=[
                 {"role": "user", "content": prompt}
             ]
-        )
+        ))
     except anthropic.APIError as e:
         print(f"⚠️ Claude API error during search planning: {e}")
         return {
@@ -65,6 +94,7 @@ def plan_searches(use_case: str, technology: str, industry: str) -> dict:
             "thinking": None,
             "tokens_in": 0,
             "tokens_out": 0,
+            "error": f"plan_searches API error: {e}",
         }
 
     thinking_text = ""
@@ -152,15 +182,15 @@ def analyze_compliance(use_case: str, technology: str, industry: str, research_f
     )
 
     try:
-        response = client.messages.create(
+        response = _retry_api_call(lambda: client.messages.create(
             model="claude-sonnet-4-5-20250929",
-            max_tokens=16000,
-            thinking={"type": "enabled", "budget_tokens": 8000},
+            max_tokens=8000,
+            thinking={"type": "enabled", "budget_tokens": 4000},
             system=SYSTEM_PROMPT,
             messages=[
                 {"role": "user", "content": prompt}
             ]
-        )
+        ))
     except anthropic.APIError as e:
         print(f"❌ Claude API error during analysis: {e}")
         return {
@@ -168,6 +198,7 @@ def analyze_compliance(use_case: str, technology: str, industry: str, research_f
             "thinking": None,
             "tokens_in": 0,
             "tokens_out": 0,
+            "error": f"analyze_compliance API error: {e}",
         }
 
     thinking_text = ""
@@ -187,7 +218,7 @@ def analyze_compliance(use_case: str, technology: str, industry: str, research_f
 
 
 # Function 4: save_report() - Persist results to a file
-def save_report(result: dict, version: str = "v0.1", output_dir: str | None = None, run_id: str | None = None) -> str:
+def save_report(result: dict, version: str = "v0.5", output_dir: str | None = None, run_id: str | None = None) -> str:
     """
     Save the analysis report to a timestamped file named after the use case.
 
@@ -206,9 +237,9 @@ def save_report(result: dict, version: str = "v0.1", output_dir: str | None = No
     reports_dir = os.path.join(output_dir, "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
-    slug = re.sub(r'[^a-z0-9]+', '-', result['use_case'].lower()).strip('-')
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"report_{version}_{slug}_{timestamp}.md"
+    slug = re.sub(r'[^a-z0-9]+', '-', result['use_case'].lower()).strip('-')[:30].rstrip('-')
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    filename = f"report_{version}_{timestamp}_{slug}.md"
     filepath = os.path.join(reports_dir, filename)
 
     timing = result.get('timing', {})
@@ -247,7 +278,7 @@ def save_report(result: dict, version: str = "v0.1", output_dir: str | None = No
 
 # Function 5: run_analysis() - Orchestrate everything
 @observe()
-def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.4") -> dict:
+def run_analysis(use_case: str, technology: str, industry: str, version: str = "v0.5") -> dict:
     """
     Main function to run complete compliance gap analysis.
 
