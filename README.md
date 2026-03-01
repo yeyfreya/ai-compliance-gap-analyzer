@@ -82,6 +82,7 @@ ai-compliance-gap-analyzer/
 │   └── test-log.csv      # Centralized performance log (local backup)
 ├── docs/                 # Project documentation
 │   ├── DOCUMENTATION-GUIDE.md   # Documentation conventions
+│   ├── BRANCHING-GUIDE.md       # Git branching workflow (main/dev, PRs, tags)
 │   ├── iterations/              # One file per version — full analysis story
 │   └── dev-logs/                # Session summaries
 └── .env                  # API keys (not committed)

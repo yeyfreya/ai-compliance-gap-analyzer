@@ -18,7 +18,7 @@ ai-compliance-gap-analyzer/
 │
 ├── .cursor/rules/            # Cursor rules (committed to git)
 │   ├── documentation-system.mdc   # Auto-read docs before working
-│   ├── no-assumptions.mdc         # Confirm before interpreting user intent
+│   ├── agent-behavior.mdc         # No assumptions, root-cause surfacing, product identity
 │   └── pre-commit-review.mdc      # Pre-commit checklist for agents
 │
 ├── reports/                  # Generated compliance analysis reports
@@ -27,6 +27,7 @@ ai-compliance-gap-analyzer/
 │
 └── docs/
     ├── DOCUMENTATION-GUIDE.md    # THIS FILE — how to document everything
+    ├── BRANCHING-GUIDE.md        # Git branching workflow (main/dev, PRs, tags)
     ├── PROJECT-SCHEMA.md         # LOCAL ONLY — project vision, strategy, sourced quotes
     │
     ├── iterations/               # One file per version — the full story
@@ -370,12 +371,14 @@ When the user says "let's start v0.X", the agent should:
 8. Write dev log summary for the chat session
 9. User exports chat transcript from Cursor
 10. Agent suggests a commit message (see Section 9)
-11. Commit and push:
+11. Commit and push to `dev` (see `docs/BRANCHING-GUIDE.md` for full workflow):
    ```powershell
+   git checkout dev
    git add .
    git commit -m "v0.X: description"
-   git push
+   git push origin dev
    ```
+12. When version is tested and stable, merge `dev → main` via Pull Request (see Branching Guide)
 
 ---
 
