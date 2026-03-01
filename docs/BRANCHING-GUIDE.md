@@ -54,8 +54,11 @@ After this, you'll have:
 # Make sure you're on dev
 git checkout dev
 
-# Pull latest (in case you pushed from another machine)
-git pull origin dev
+# Optional: Only pull if you worked on another computer or edited on GitHub
+# git pull origin dev
+
+# Check your status
+git status
 ```
 
 ### Committing your work

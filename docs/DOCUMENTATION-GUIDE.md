@@ -9,14 +9,20 @@ Any AI agent working on this project should follow these conventions exactly.
 
 ```
 ai-compliance-gap-analyzer/
-├── agent.py                  # Main orchestrator (pipeline + test scenarios + timing)
-├── tools.py                  # Search tools (Tavily)
-├── prompts.py                # Prompts sent to Claude
-├── requirements.txt          # Python dependencies
-├── CHANGELOG.md              # Version history (summary per version)
-├── .gitignore                # Protects .env, .cursor/, transcripts, etc.
+├── agent.py                  # Main orchestrator (pipeline + test scenarios + timing + Langfuse)
+├── streamlit_app.py         # Streamlit web UI (user event tracking)
+├── tracking.py              # Supabase tracking (sessions, runs, events, reports)
+├── sync_reports.py          # Pull cloud reports from Supabase to local reports/
+├── test_tracking.py         # Integration tests (Supabase, Langfuse, run_id)
+├── tools.py                 # Tavily web search and result formatting
+├── prompts.py               # Prompts sent to Claude
+├── supabase_schema.sql      # Database schema (run in Supabase SQL Editor)
+├── requirements.txt         # Python dependencies
+├── CHANGELOG.md             # Version history (summary per version)
+├── .gitignore               # Protects .env, .cursor/, transcripts, etc.
+├── .streamlit/config.toml   # Streamlit theme (dark mode)
 │
-├── .cursor/rules/            # Cursor rules (committed to git)
+├── .cursor/rules/           # Cursor rules (committed to git)
 │   ├── documentation-system.mdc   # Auto-read docs before working
 │   ├── agent-behavior.mdc         # No assumptions, root-cause surfacing, product identity
 │   └── pre-commit-review.mdc      # Pre-commit checklist for agents

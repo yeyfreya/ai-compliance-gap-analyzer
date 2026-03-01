@@ -34,6 +34,10 @@ reasoning prompts added so Claude explains its decision-making in every report.
 - **Integration tests** (`test_tracking.py`): Expanded from basic connection test to 4-part test suite: Supabase cross-table linkage, Langfuse connection, parent trace architecture (nested spans + metadata), local report correlation (run_id in report header + CSV)
 - **Known non-bug rule** (`.cursor/rules/documentation-system.mdc`): Documented Windows GBK emoji error as Cursor shell bug — agents must not strip emoji from code
 
+### What Changed — Session 3: Branching (2026-02-28)
+- **Branching guide** (`docs/BRANCHING-GUIDE.md`): main/dev workflow, PR-based merges, release tagging, optional staging app for Streamlit Cloud testing
+- **Docs updated**: DOCUMENTATION-GUIDE workflow, README project structure and Development section
+
 Full details: [docs/iterations/v0.4-supabase-langfuse-tracking.md](docs/iterations/v0.4-supabase-langfuse-tracking.md)
 
 ---

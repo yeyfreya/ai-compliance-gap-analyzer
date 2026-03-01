@@ -149,7 +149,7 @@ Each run generates a timestamped report in `reports/` and appends performance da
 - Report detail sections vary between runs (Risk Prioritization Matrix is fixed; rest is flexible)
 - Linear pipeline only (no research adequacy validation loop yet)
 - Supabase RLS disabled (acceptable for portfolio project; needs RLS for production)
-- Streamlit Cloud deployment needs re-deploy after v0.4 Session 2 changes
+- No structured error logging (errors surface only in Streamlit UI; no centralized log for debugging)
 
 All critical/high bugs from v0.1–v0.2 have been fixed.
 See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for full details.
@@ -174,6 +174,7 @@ See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for
 - [x] Cloud report sync (`sync_reports.py` pulls Supabase reports to local)
 - [ ] Consistent detailed report structure (full template enforcement)
 - [ ] Pipeline → agent loop (research adequacy check)
+- [ ] Structured error logging (centralized log for debugging)
 - [ ] PDF report generation
 - [x] Cloud deployment (Streamlit Cloud)
 - [ ] OpenClaw plugin version (v2)
@@ -181,6 +182,7 @@ See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for
 ## Development
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and [docs/iterations/](docs/iterations/) for detailed analysis per version.
+See [docs/BRANCHING-GUIDE.md](docs/BRANCHING-GUIDE.md) for git workflow (main/dev, PRs, tags).
 
 **Current version:** v0.4 — Supabase + Langfuse Tracking ([full iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md))
 
