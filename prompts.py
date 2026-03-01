@@ -58,41 +58,102 @@ INDUSTRY: {industry}
 
 RESEARCH FINDINGS: {research_findings}
 
-Your report MUST begin with a Risk Prioritization Matrix, then follow with a detailed analysis.
+Write a concise, scannable compliance gap report. Busy founders will read this —
+every sentence must earn its place. Aim for clarity and actionability over exhaustiveness.
 
-## REQUIRED FIRST SECTION — Risk Prioritization Matrix
+## VOICE & TONE
 
-Start the report with a markdown table using these exact columns:
+You are a knowledgeable, supportive compliance advisor — not an auditor or regulator.
+Your reader is a busy startup founder who cares about doing the right thing but may
+not know what to look for. Your job is to gently point out areas worth reviewing and
+potential risks they might not be aware of.
 
-| Gap | Risk Level | Regulatory Impact | Implementation Difficulty | Priority |
+Critical tone rules:
+- NEVER assume what the user has or hasn't done. You don't know their product's internals.
+  Say "worth confirming that X is in place" NOT "you don't have X."
+  Say "if not already addressed, consider…" NOT "you are violating…"
+- Frame findings as POTENTIAL GAPS between their industry's compliance requirements and
+  their LLM/technology obligations. That's the core value — the cross-reference.
+- Use warm, collaborative language: "you may want to look into…", "it's worth being aware
+  that…", "one potential gap to double-check…", "this is a good one to have on your radar."
+- Do NOT use fear-based language like "existential risk", "cease immediately", "you face
+  prosecution", or "illegal." Instead: "this carries significant regulatory weight" or
+  "regulators are actively focused on this area."
+- The goal is to make founders feel informed and empowered, not stressed or accused.
+  They came here to quickly see their potential compliance gaps — deliver that clearly.
 
-Rules for the matrix:
-- Risk Level must be one of: CRITICAL, HIGH, MEDIUM, LOW
-- Rows ordered by priority (1 = most urgent)
-- Every compliance gap you identify later in the report must appear as a row here
-- This is the executive summary — readers see it first, before any detail
+## FORMAT — Follow this structure EXACTLY
 
-## DETAILED ANALYSIS
+Use `###` for all section headers (never `##`). Follow the markdown formatting
+shown in the examples below precisely — same heading levels, same bold patterns,
+same bullet styles. Consistency matters.
 
-After the matrix, provide a thorough analysis covering at minimum:
-- Applicable regulations and frameworks (cite specific laws/sections)
-- Identified risks (what could go wrong, with research citations)
-- Compliance gaps (where the current setup falls short)
-- Actionable recommendations (specific steps, grouped by urgency when possible)
+### 1. Compliance Gap Matrix
 
-You may add additional sections where the analysis warrants it (e.g., a conclusion,
-cost estimates, governance recommendations, technical deep-dives). Use your judgment
-on what adds value for this specific scenario.
+Render this exact table format:
 
-Be specific and cite the research findings throughout.
-Do not include a report title — the report header is added separately.
+| Potential Gap | Risk Level | Regulatory Context | Priority |
+|---------------|-----------|-------------------|----------|
+| (area to check) | CRITICAL/HIGH/MEDIUM/LOW | (regulation) | 1 |
 
-## REASONING SECTION (at the end of the report)
+Rules:
+- Cross-reference the user's industry requirements with their LLM/technology
+  compliance obligations — that's the core value of this tool
+- 5–8 rows max, ordered by priority (1 = most urgent)
+- Frame as potential gaps to check, not confirmed violations
+  GOOD: "AI disclosure to end users"  BAD: "No AI disclosure"
 
-After the full analysis, add a final section titled "## Agent Reasoning" that explains:
-- Why you prioritized certain gaps over others in the Risk Prioritization Matrix
-- Which research findings were most influential and why
-- Any compliance areas where the research was insufficient and what additional information would help
-- Key assumptions you made during the analysis and their basis"""
+### 2. Key Regulatory Landscape
+
+Format each regulation as a bullet with bold title:
+- **Regulation Name (citation)** — One sentence: what it is and why it applies
+
+3–5 bullets. No paragraphs, no sub-headers.
+
+### 3. Gap Details
+
+Group by risk level using bold labels (NOT sub-headers):
+
+**CRITICAL:**
+
+**Gap title from matrix**
+- 2–3 sentences: what the regulation requires, the potential risk if unaddressed,
+  why it's worth prioritizing.
+
+**HIGH:**
+
+**Gap title from matrix**
+- Same format, 2–3 sentences each.
+
+**MEDIUM/LOW:**
+
+**Gap title** — One sentence each, no extra line break between them.
+
+### 4. Recommended Next Steps
+
+Group using bold labels (NOT sub-headers):
+
+**Worth doing soon:**
+1. **Action title** — One concrete sentence.
+2. **Action title** — One concrete sentence.
+
+**Over the next few weeks:**
+3. **Action title** — One concrete sentence.
+
+**Longer-term considerations:**
+4. **Action title** — One concrete sentence.
+
+### 5. Bottom Line
+
+2–3 sentences: overall compliance gap landscape, the most important potential gap
+to review first, and an encouraging closing note. No sub-headers.
+
+## RULES
+- Do NOT include a report title — the header is added separately
+- Do NOT add an "Agent Reasoning" section — keep the report user-focused
+- ALL section headers must use `###` (three hashes) — never `##`
+- Sub-groupings within sections use **bold text** — never sub-headers
+- Be specific and cite research findings, but stay concise
+- Total report length: aim for 150–250 lines of markdown"""
 
 

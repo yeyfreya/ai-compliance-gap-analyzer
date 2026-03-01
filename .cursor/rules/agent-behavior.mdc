@@ -48,3 +48,32 @@ When writing, editing, or reviewing any user-facing content (UI text, step messa
 - GOOD: "The agent is cross-referencing findings and writing your report…"
 - BAD: "Searching Tavily for results…"
 - GOOD: "Searching the web for regulatory data…"
+
+## 4. Report Voice & Product Identity
+
+The product is an **AI Compliance Gap Analyzer**. The core value proposition: "I help you quickly see the potential compliance gaps between your LLM/technology and your industry's regulatory requirements." Every report must reinforce this.
+
+### Report voice rules:
+
+- **Gentle advisor, not auditor.** The reader is a busy startup founder. The tone is warm, supportive, and informative — like a knowledgeable friend pointing out things they might want to look into.
+- **NEVER assume what the user has or hasn't done.** We don't know their product's internals. Say "worth confirming" not "you don't have." Say "if not already addressed" not "you are violating."
+- **Use "potential gaps" language**, consistent with the product name. Findings are potential gaps between industry compliance requirements and LLM/technology obligations — the cross-reference is the product's core value.
+- **No fear-based language.** No "cease immediately", "illegal", "existential risk", "you face prosecution." Instead: "this carries significant regulatory weight", "regulators are actively focused on this area."
+- **Scannable and concise.** Busy founders won't read 800 lines. Reports target 150–250 lines. Every sentence must earn its place. Bullet points over paragraphs.
+- **The goal:** make founders feel informed and empowered, not stressed or accused. They came here to quickly see their potential compliance gaps — deliver that clearly.
+
+### What This Looks Like
+
+- BAD: "No FDA clearance for diagnostic software" → assumes violation
+- GOOD: "FDA clearance for diagnostic software" → frames as area to check
+- BAD: "Cease all clinical use immediately" → fear-based, assumptive
+- GOOD: "If clinical use is planned, it's worth confirming FDA clearance is in place — this carries significant regulatory weight"
+
+## 5. Token-Efficient Execution
+
+Use Cursor tokens cost-effectively. Do not spend tokens on tasks the user can easily run themselves.
+
+- **Do NOT run test suites, Streamlit launches, or long-running commands** (e.g., `python test_tracking.py`, `streamlit run`) inside Cursor's shell. Prepare the command and let the user run it in their own terminal.
+- **Do NOT poll or monitor long-running processes** when the user can check the output themselves.
+- **Focus Cursor tokens on high-value work:** writing code, reading files, searching the codebase, architectural analysis, documentation — things that require the agent's reasoning.
+- **When a task is "run this and check the result"**, hand it off to the user with a clear command and what to look for.

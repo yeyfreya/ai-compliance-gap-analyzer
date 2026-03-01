@@ -1,8 +1,11 @@
 """
-Test script for v0.4 observability — verifies:
+Test script for v0.4–v0.5 observability — verifies:
 1. Supabase connection (sessions, runs, events, reports)
 2. Langfuse connection (basic trace)
 3. Parent trace architecture (run_id correlation across Streamlit → Supabase → Langfuse → local)
+4. Local report correlation (run_id in report header + CSV)
+5. Error logging to Supabase (error_logs table)
+6. Rate limiting (per-session analysis count)
 
 Run: python test_tracking.py
 """
@@ -207,9 +210,127 @@ def test_local_report_correlation(run_id):
     return True
 
 
+def test_error_logging(session_id, run_id):
+    """Test v0.5 error logging to Supabase error_logs table."""
+    print("\n--- Test 5: Error Logging (v0.5) ---")
+    import tracking
+    from tracking import log_error, mark_run_failed
+
+    test_error = ValueError("Test error for v0.5 integration test")
+
+    log_error(
+        test_error,
+        session_id=session_id,
+        run_id=run_id,
+        pipeline_step="test_step",
+        user_inputs={"use_case": "test", "technology": "test", "industry": "test"},
+        app_version="v0.5",
+    )
+
+    rows = (tracking._supabase_client
+            .from_("error_logs")
+            .select("*")
+            .eq("run_id", run_id)
+            .execute())
+
+    if not rows.data:
+        print("[FAIL] No error_logs row found for run_id")
+        return False
+
+    row = rows.data[0]
+    checks = [
+        ("error_type", row.get("error_type") == "ValueError"),
+        ("error_message", "Test error" in row.get("error_message", "")),
+        ("pipeline_step", row.get("pipeline_step") == "test_step"),
+        ("session_id", row.get("session_id") == session_id),
+        ("app_version", row.get("app_version") == "v0.5"),
+        ("user_inputs", row.get("user_inputs") is not None),
+    ]
+
+    all_ok = True
+    for field, ok in checks:
+        status = "[PASS]" if ok else "[FAIL]"
+        print(f"  {status} error_logs.{field}")
+        if not ok:
+            all_ok = False
+
+    # Test mark_run_failed — create a separate run so we don't pollute the main test run
+    fail_run_id = tracking._supabase_client.from_("analysis_runs").insert({
+        "session_id": session_id,
+        "use_case": "fail test",
+        "technology": "test",
+        "industry": "test",
+        "scenario_source": "test",
+        "app_version": "v0.5",
+        "status": "running",
+    }).execute().data[0]["id"]
+
+    mark_run_failed(fail_run_id, test_error)
+
+    fail_row = (tracking._supabase_client
+                .from_("analysis_runs")
+                .select("status, error_message")
+                .eq("id", fail_run_id)
+                .execute())
+
+    if fail_row.data and fail_row.data[0]["status"] == "error":
+        print(f"  [PASS] mark_run_failed: status='error'")
+    else:
+        print(f"  [FAIL] mark_run_failed: status not updated")
+        all_ok = False
+
+    if fail_row.data and "Test error" in (fail_row.data[0].get("error_message") or ""):
+        print(f"  [PASS] mark_run_failed: error_message contains error text")
+    else:
+        print(f"  [FAIL] mark_run_failed: error_message missing")
+        all_ok = False
+
+    if all_ok:
+        print("\n[PASS] All error logging tests passed")
+    return all_ok
+
+
+def test_rate_limiting(session_id):
+    """Test v0.5 rate limiting via Supabase count query."""
+    print("\n--- Test 6: Rate Limiting (v0.5) ---")
+    from tracking import is_rate_limited, MAX_RUNS_PER_SESSION
+    import tracking
+
+    rate = is_rate_limited(session_id)
+
+    if rate is None:
+        print("[FAIL] is_rate_limited returned None")
+        return False
+
+    print(f"  Session {session_id[:8]}… has {rate['used']} runs (limit: {rate['limit']})")
+    print(f"  [PASS] is_rate_limited returned: allowed={rate['allowed']}, used={rate['used']}, limit={rate['limit']}")
+
+    if rate["limit"] == MAX_RUNS_PER_SESSION:
+        print(f"  [PASS] Limit matches MAX_RUNS_PER_SESSION ({MAX_RUNS_PER_SESSION})")
+    else:
+        print(f"  [FAIL] Limit mismatch: expected {MAX_RUNS_PER_SESSION}, got {rate['limit']}")
+        return False
+
+    # Test with a fresh session that has zero runs
+    fresh_session_id = tracking._supabase_client.from_("sessions").insert({
+        "streamlit_session_id": "test-rate-limit-fresh",
+        "app_version": "v0.5",
+    }).execute().data[0]["id"]
+
+    fresh_rate = is_rate_limited(fresh_session_id)
+    if fresh_rate["allowed"] and fresh_rate["used"] == 0:
+        print(f"  [PASS] Fresh session: allowed=True, used=0")
+    else:
+        print(f"  [FAIL] Fresh session should have 0 runs and be allowed")
+        return False
+
+    print("\n[PASS] All rate limiting tests passed")
+    return True
+
+
 if __name__ == "__main__":
     print("=" * 60)
-    print("v0.4 Observability & Correlation Test")
+    print("v0.5 Observability, Error Logging & Rate Limiting Test")
     print("=" * 60)
 
     supabase_ok, session_id, run_id = test_supabase()
@@ -217,12 +338,20 @@ if __name__ == "__main__":
 
     parent_ok = False
     local_ok = False
+    error_ok = False
+    rate_ok = False
 
     if supabase_ok and langfuse_ok and run_id:
         parent_ok = test_parent_trace(run_id, session_id)
         local_ok = test_local_report_correlation(run_id)
     elif not run_id:
         print("\n[SKIP] Parent trace & local tests -- Supabase run_id required")
+
+    if supabase_ok and session_id and run_id:
+        error_ok = test_error_logging(session_id, run_id)
+        rate_ok = test_rate_limiting(session_id)
+    elif not supabase_ok:
+        print("\n[SKIP] Error logging & rate limiting tests -- Supabase required")
 
     print("\n" + "=" * 60)
     print("RESULTS")
@@ -232,6 +361,8 @@ if __name__ == "__main__":
         ("Langfuse connection + basic trace", langfuse_ok),
         ("Parent trace architecture (nested spans + metadata)", parent_ok),
         ("Local report correlation (run_id in report + CSV)", local_ok),
+        ("Error logging to Supabase (error_logs + mark_run_failed)", error_ok),
+        ("Rate limiting (per-session count)", rate_ok),
     ]
     for name, passed in tests:
         status = "[PASS]" if passed else "[FAIL]"
@@ -241,7 +372,7 @@ if __name__ == "__main__":
 
     if all(ok for _, ok in tests):
         print("\nAll tests passed. Verify in dashboards:")
-        print("  Supabase: Dashboard > Table Editor > sessions/analysis_runs/reports")
+        print("  Supabase: Dashboard > Table Editor > sessions/analysis_runs/reports/error_logs")
         print("  Langfuse: https://cloud.langfuse.com > Traces > look for 'test_parent_pipeline'")
         print(f"\n  Correlation key: run_id = {run_id}")
-        print(f"  This run_id should appear in: Supabase, Langfuse trace metadata, local report header, test-log.csv")
+        print(f"  This run_id should appear in: Supabase (runs, reports, error_logs), Langfuse, local report, CSV")

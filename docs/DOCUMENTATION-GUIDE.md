@@ -24,11 +24,11 @@ ai-compliance-gap-analyzer/
 │
 ├── .cursor/rules/           # Cursor rules (committed to git)
 │   ├── documentation-system.mdc   # Auto-read docs before working
-│   ├── agent-behavior.mdc         # No assumptions, root-cause surfacing, product identity
+│   ├── agent-behavior.mdc         # No assumptions, root-cause surfacing, product identity, report voice, token efficiency
 │   └── pre-commit-review.mdc      # Pre-commit checklist for agents
 │
 ├── reports/                  # Generated compliance analysis reports
-│   ├── report_v<VERSION>_<use-case-slug>_<YYYYMMDD_HHMMSS>.md
+│   ├── report_v<VERSION>_<YYYYMMDD_HHMM>_<slug>.md
 │   └── test-log.csv          # Centralized performance log (AI observability)
 │
 └── docs/
@@ -130,9 +130,11 @@ Full details: [docs/iterations/v0.X-description.md](docs/iterations/v0.X-descrip
 **Generated output from running agent.py.** These are tracked in git.
 
 ### Naming
-`report_v<VERSION>_<use-case-slug>_<YYYYMMDD_HHMMSS>.md`
+`report_v<VERSION>_<YYYYMMDD_HHMM>_<slug>.md`
 
-Example: `report_v0.1_ai-powered-resume-screening-tool_20260225_155951.md`
+Date comes right after version for scannability. Slug is capped at 30 characters.
+
+Example: `report_v0.5_20260228_2133_ai-diagnostic-assistant.md`
 
 ### How they're created
 - `save_report()` in `agent.py` generates these automatically
@@ -140,8 +142,10 @@ Example: `report_v0.1_ai-powered-resume-screening-tool_20260225_155951.md`
 - When bumping versions, update the default version string in code
 
 ### Rules
-- Never delete old reports — they document what each code version produced
-- Reports are tracked in git (not in .gitignore)
+- Never delete old reports locally — they document what each code version produced
+- **Most reports are gitignored** (`reports/report_*.md` in `.gitignore`). Only 2–3 curated "showcase" reports are tracked in git — these are un-ignored with `!` lines in `.gitignore`
+- When a new version significantly improves report quality, consider swapping showcase reports to reflect the latest version
+- `test-log.csv` is always tracked (not gitignored)
 
 ---
 
@@ -184,11 +188,11 @@ Every successful `run_analysis()` call appends one row to `reports/test-log.csv`
 
 ### Future Growth
 
-This is the starting point. As the project matures, consider:
-- **Cost tracking** — log token usage and estimated API costs per run
-- **Output quality metrics** — report length, number of gaps found, number of recommendations
-- **Error tracking** — log failed runs with error type and which step failed
-- **Dedicated tooling** — migrate to Langfuse, LangSmith, or similar when dashboard/alerting needs arise
+Since v0.4–v0.5, several of these have been implemented:
+- ~~**Dedicated tooling**~~ — Langfuse (v0.4) for AI traces, Supabase (v0.4) for user data
+- ~~**Error tracking**~~ — Supabase `error_logs` table (v0.5) with full context
+- **Cost tracking** — monitor via Langfuse dashboard (token usage, cost per trace)
+- **Output quality metrics** — report length, number of gaps found, number of recommendations (future)
 
 ---
 
@@ -305,12 +309,14 @@ Update the README whenever any of these change:
 | **Architecture changed** | Overview diagram, Tech stack if applicable |
 | **New known issues found** | Known Issues section |
 | **Repo renamed or clone URL changed** | Installation section (git clone URL) |
+| **Product behavior changed** | Example output, Known Issues, any prose describing how the tool works (timing, report format, terminology) |
 
 ### Rules
 - Keep the README concise — it's a landing page, not deep documentation
 - Known Issues should reflect the **current** version only (not historical); link to the iteration doc for the full list
 - Roadmap checkboxes should match actual project state
 - The "Current version" line at the bottom must match the version in `agent.py`
+- **Content accuracy matters:** When product behavior changes (report format, timing, terminology, output structure), scan the full README for stale descriptions — not just version numbers. Example output sections and Known Issues are especially prone to going stale.
 - When in doubt, update it — a stale README is worse than a slightly verbose one
 
 ---
@@ -350,13 +356,18 @@ If a session spans multiple concerns, summarize the biggest changes -- don't lis
 
 ## 10. Version Management
 
-The current version is defined in one place in code: the `version` default parameter in `run_analysis()` inside `agent.py`.
+The current version is defined in two places in code:
+1. The `version` default parameter in `run_analysis()` inside `agent.py`
+2. The `VERSION` constant in `streamlit_app.py`
+
+Both must be updated together when bumping versions.
 
 ### How to Bump the Version
 When the user says "let's start v0.X", the agent should:
 1. Update the default `version` parameter in `run_analysis()` in `agent.py`
-2. Create a new iteration doc: `docs/iterations/v<NEW>-<description>.md`
-3. Add a new entry to `CHANGELOG.md`
+2. Update the `VERSION` constant in `streamlit_app.py`
+3. Create a new iteration doc: `docs/iterations/v<NEW>-<description>.md`
+4. Add a new entry to `CHANGELOG.md`
 
 ### Version Numbering
 - `v0.1`, `v0.2`, `v0.3`... — incremental improvements

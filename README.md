@@ -2,7 +2,7 @@
 
 An intelligent AI agent that analyzes AI implementations for regulatory compliance gaps and risks.
 
-> **Status:** v0.4 — Active development. [**Live Demo**](https://ai-compliance-gap-analyzer.streamlit.app/) available. CLI pipeline also supported.
+> **Status:** v0.5 — Active development. [**Live Demo**](https://ai-compliance-gap-analyzer.streamlit.app/) available. CLI pipeline also supported.
 
 ## Overview
 
@@ -43,13 +43,13 @@ append_test_log() ──► Row appended to reports/test-log.csv
 - Industry: "Enterprise HR (US-based)"
 
 **Output:**
-- **Risk Prioritization Matrix** — executive summary table with gap, risk level, regulatory impact, implementation difficulty, and priority ranking
-- Applicable regulations (EEOC AI guidance, NYC Local Law 144)
-- Identified risks (bias, data retention, transparency requirements)
-- Compliance gaps (missing bias audit, no candidate disclosure)
-- Actionable recommendations grouped by urgency (immediate, short-term, medium-term)
+- **Compliance Gap Matrix** — executive summary table with potential gap, risk level, regulatory basis, and recommended action
+- Key regulatory landscape (applicable frameworks and requirements)
+- Gap details with analysis (what each gap means and why it matters)
+- Recommended next steps grouped by priority
+- Bottom line (concise takeaway for founders)
 
-Sample reports are included in the repo — see [`reports/`](reports/) for analyses across HR, healthcare, fintech, education, and RegTech scenarios.
+Showcase reports are included in the repo — see [`reports/`](reports/) for examples across healthcare, fintech, and RegTech. Or [try the live demo](https://ai-compliance-gap-analyzer.streamlit.app/) to generate your own.
 
 ## Tech Stack
 
@@ -78,7 +78,7 @@ ai-compliance-gap-analyzer/
 ├── .streamlit/
 │   └── config.toml       # Streamlit theme (dark mode)
 ├── reports/              # Generated compliance analysis reports
-│   ├── report_v*.md      # Version-tagged markdown reports
+│   ├── report_*.md       # Showcase reports (3 tracked; rest are local-only)
 │   └── test-log.csv      # Centralized performance log (local backup)
 ├── docs/                 # Project documentation
 │   ├── DOCUMENTATION-GUIDE.md   # Documentation conventions
@@ -143,16 +143,16 @@ python agent.py regtech     # AI compliance analyzer — RegTech SaaS
 
 Each run generates a timestamped report in `reports/` and appends performance data to `reports/test-log.csv`.
 
-## Known Issues (v0.4)
+## Known Issues (v0.5)
 
-- Analysis usually takes 2–3 minutes but can exceed 5 minutes for complex or region-specific cases
-- Report detail sections vary between runs (Risk Prioritization Matrix is fixed; rest is flexible)
+- Analysis usually takes about a minute but can vary for complex or region-specific cases
+- Minor formatting inconsistencies between reports (section styling may vary slightly)
 - Linear pipeline only (no research adequacy validation loop yet)
 - Supabase RLS disabled (acceptable for portfolio project; needs RLS for production)
-- No structured error logging (errors surface only in Streamlit UI; no centralized log for debugging)
+- Individual search failures within `conduct_research()` are silently swallowed (logged but not surfaced)
 
-All critical/high bugs from v0.1–v0.2 have been fixed.
-See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for full details.
+All critical/high bugs from v0.1–v0.4 have been fixed.
+See [v0.5 iteration doc](docs/iterations/v0.5-error-handling-and-rate-limiting.md) for full details.
 
 ## Roadmap
 
@@ -166,15 +166,17 @@ See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for
 - [x] Test scenario runner with CLI
 - [x] Per-step timing and AI observability logging
 - [x] Streamlit web interface
-- [x] Risk Prioritization Matrix (mandatory first section)
+- [x] Compliance Gap Matrix (mandatory first section)
 - [x] Usage tracking & report persistence (Supabase)
 - [x] AI agent observability (Langfuse — traces, extended thinking, tokens, cost)
 - [x] Extended Thinking (Claude's internal reasoning captured and logged)
 - [x] Cross-service correlation (`run_id` links local reports ↔ Supabase ↔ Langfuse)
 - [x] Cloud report sync (`sync_reports.py` pulls Supabase reports to local)
+- [x] Structured error logging (Supabase `error_logs` table with full context)
+- [x] Retry logic for transient API errors (Claude + Tavily)
+- [x] Rate limiting (invisible per-session limit, budget protection)
 - [ ] Consistent detailed report structure (full template enforcement)
 - [ ] Pipeline → agent loop (research adequacy check)
-- [ ] Structured error logging (centralized log for debugging)
 - [ ] PDF report generation
 - [x] Cloud deployment (Streamlit Cloud)
 - [ ] OpenClaw plugin version (v2)
@@ -184,7 +186,7 @@ See [v0.4 iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md) for
 See [CHANGELOG.md](CHANGELOG.md) for version history and [docs/iterations/](docs/iterations/) for detailed analysis per version.
 See [docs/BRANCHING-GUIDE.md](docs/BRANCHING-GUIDE.md) for git workflow (main/dev, PRs, tags).
 
-**Current version:** v0.4 — Supabase + Langfuse Tracking ([full iteration doc](docs/iterations/v0.4-supabase-langfuse-tracking.md))
+**Current version:** v0.5 — Error Handling, Error Logging & Rate Limiting ([full iteration doc](docs/iterations/v0.5-error-handling-and-rate-limiting.md))
 
 ## License
 

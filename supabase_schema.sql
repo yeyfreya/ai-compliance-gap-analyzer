@@ -50,12 +50,27 @@ create table reports (
   created_at timestamptz not null default now()
 );
 
+-- 5. Error logs — structured error tracking for debugging (v0.5)
+create table error_logs (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid references sessions(id),
+  run_id uuid references analysis_runs(id),
+  error_type text not null,
+  error_message text not null,
+  error_traceback text,
+  pipeline_step text,
+  user_inputs jsonb,
+  app_version text not null,
+  created_at timestamptz not null default now()
+);
+
 -- Disable Row Level Security (portfolio project, no user auth).
 -- Add RLS policies if this goes to production with user accounts.
 alter table sessions disable row level security;
 alter table analysis_runs disable row level security;
 alter table user_events disable row level security;
 alter table reports disable row level security;
+alter table error_logs disable row level security;
 
 -- Indexes for common queries
 create index idx_analysis_runs_session on analysis_runs(session_id);
@@ -63,3 +78,5 @@ create index idx_analysis_runs_started on analysis_runs(started_at);
 create index idx_user_events_session on user_events(session_id);
 create index idx_user_events_type on user_events(event_type);
 create index idx_reports_run on reports(run_id);
+create index idx_error_logs_session on error_logs(session_id);
+create index idx_error_logs_created on error_logs(created_at);

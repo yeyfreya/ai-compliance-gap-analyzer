@@ -5,6 +5,36 @@ Each version represents an iteration, including what was analyzed, what changed,
 
 ---
 
+## [v0.5] - 2026-02-28 — Error Handling, Error Logging & Rate Limiting
+
+### Summary
+Pre-LinkedIn-launch hardening: structured error logging to Supabase, try/except around
+the full pipeline (no more raw tracebacks for users), retry logic for transient API
+errors, and invisible per-session rate limiting to protect API budget without adding
+user friction.
+
+### What Changed — Session 1: Error Tracing, Rate Limiting, Report Restructure & Product Voice (2026-02-28)
+- **Retry logic** (`agent.py`, `tools.py`): `_retry_api_call()` retries once with backoff on transient Claude errors (rate limits, timeouts, 500s). Tavily `search_web()` also retries once on failure
+- **Error logging** (`tracking.py`, `supabase_schema.sql`): New `error_logs` table with error type, message, traceback, pipeline step, user inputs, session/run correlation. New `log_error()` and `mark_run_failed()` functions
+- **Pipeline error handling** (`streamlit_app.py`): Full try/except around `_run_pipeline()` — logs error to Supabase, marks run as failed, shows friendly message with run_id reference. Separate try/except for `save_report()` with in-memory fallback
+- **Rate limiting** (`tracking.py`, `streamlit_app.py`): Invisible per-session limit (3 analyses). Counts via Supabase query. Friendly limit message with LinkedIn lead-gen link. Defaults to allowing if Supabase is down
+- **Report restructure** (`prompts.py`, `agent.py`): Concise 5-section format (Gap Matrix → Regulatory Landscape → Gap Details → Next Steps → Bottom Line). Removed Agent Reasoning section. Reduced `max_tokens` 16000→8000, thinking budget 8000→4000. Target: 150–250 lines, under 2 min
+- **Report voice** (`prompts.py`): Gentle advisor tone, "potential gaps" language, no assumptions about user's product, no fear-based language. Aligned with product name
+- **UI polish** (`streamlit_app.py`): Timer "Usually about a minute", removed local file path from UI
+- **Report naming** (`agent.py`): Date before slug, slug capped at 30 chars for scannability
+- **Bug fix** (`streamlit_app.py`): Added `load_dotenv()` before API key check — local runs were failing
+- **Agent rules** (`.cursor/rules/agent-behavior.mdc`): Added Report Voice & Product Identity (Rule 4), Token-Efficient Execution (Rule 5)
+
+### What Changed — Session 2: Pre-Merge Review (2026-03-01)
+- **Code cleanup:** Fixed `save_report()` default version `"v0.1"`→`"v0.5"`, removed unused `datetime` import from `streamlit_app.py`
+- **Privacy:** Sanitized local file paths from `.cursor/rules/pre-commit-review.mdc` and `docs/dev-logs/v0.1_...`
+- **README accuracy:** Updated stale content — "Risk Prioritization Matrix" → "Compliance Gap Matrix", "2–3 minutes" → "about a minute", old format description → new 5-section structure
+- **Documentation guide** (`docs/DOCUMENTATION-GUIDE.md`, `.cursor/rules/documentation-system.mdc`): Added "product behavior changed" trigger for README updates — root cause fix for agents missing content-level staleness
+
+Full details: [docs/iterations/v0.5-error-handling-and-rate-limiting.md](docs/iterations/v0.5-error-handling-and-rate-limiting.md)
+
+---
+
 ## [v0.4] - 2026-02-27 — Supabase + Langfuse Tracking
 
 ### Summary

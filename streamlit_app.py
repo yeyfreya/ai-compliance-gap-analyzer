@@ -8,11 +8,13 @@ import json
 import streamlit as st
 import streamlit.components.v1 as components
 import time
-from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Streamlit Cloud: inject secrets as env vars before importing agent modules,
 # which create API clients at module level using os.getenv().
-# Locally, .env is loaded by agent.py via dotenv — this block is a no-op.
+# Locally, .env is loaded here via dotenv. On Cloud, st.secrets are injected below.
 _REQUIRED_KEYS = ("ANTHROPIC_API_KEY", "TAVILY_API_KEY")
 _OPTIONAL_KEYS = ("SUPABASE_URL", "SUPABASE_KEY",
                    "LANGFUSE_SECRET_KEY", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_HOST")
@@ -58,9 +60,12 @@ from tracking import (
     complete_run,
     log_user_event,
     save_report_to_db,
+    log_error,
+    mark_run_failed,
+    is_rate_limited,
 )
 
-VERSION = "v0.4"
+VERSION = "v0.5"
 _langfuse = get_langfuse_client()
 
 st.set_page_config(
@@ -219,7 +224,7 @@ def _run_pipeline(use_case, technology, industry, run_id, session_id, version):
                         <span style="font-variant-numeric:tabular-nums; font-weight:600;"
                               id="elapsed">0:00</span>
                         <span style="opacity:0.55; font-size:0.88rem;">
-                            · Usually 2–3 min · may take longer for complex or region-specific cases
+                            · Usually about a minute · may take longer for complex or region-specific cases
                         </span>
                     </div>
                     <script>
@@ -296,7 +301,6 @@ def _run_pipeline(use_case, technology, industry, run_id, session_id, version):
 
 # ── Run pipeline ──────────────────────────────────────────────────────────────
 if run_btn:
-    # Validate inputs
     missing = [
         name
         for name, val in [("Use case", use_case), ("Technology", technology), ("Industry", industry)]
@@ -306,35 +310,75 @@ if run_btn:
         st.error(f"Please fill in: **{', '.join(missing)}**")
         st.stop()
 
+    session_id = st.session_state.supabase_session_id
+
+    rate = is_rate_limited(session_id)
+    if not rate["allowed"]:
+        st.warning(
+            f"You've used all **{rate['limit']}** free analyses for this session. "
+            "Want to run more? I'd love to hear your feedback — "
+            "[reach out on LinkedIn](https://www.linkedin.com/in/yeyufreya/)."
+        )
+        log_user_event(session_id, "rate_limited",
+                       event_data={"used": rate["used"], "limit": rate["limit"]})
+        st.stop()
+
     st.session_state.result = None
     st.session_state.report_md = None
     st.session_state.report_path = None
 
-    session_id = st.session_state.supabase_session_id
     scenario_source = chosen_key if chosen_key else "custom"
-
     run_id = start_run(session_id, use_case, technology, industry, scenario_source, VERSION)
     log_user_event(session_id, "analysis_started", run_id=run_id,
                    event_data={"use_case": use_case, "technology": technology, "industry": industry})
 
-    result = _run_pipeline(use_case, technology, industry, run_id, session_id, VERSION)
+    _user_inputs = {"use_case": use_case, "technology": technology, "industry": industry}
 
-    report_path = save_report(result, version=VERSION, run_id=run_id)
-    append_test_log(result, version=VERSION, report_path=report_path, run_id=run_id)
+    try:
+        result = _run_pipeline(use_case, technology, industry, run_id, session_id, VERSION)
 
-    # Persist to Supabase
-    if run_id:
-        complete_run(run_id, result["timing"])
-        save_report_to_db(run_id, result["analysis"], result["search_queries"],
-                          os.path.basename(report_path))
-        log_user_event(session_id, "report_viewed", run_id=run_id)
+        try:
+            report_path = save_report(result, version=VERSION, run_id=run_id)
+            append_test_log(result, version=VERSION, report_path=report_path, run_id=run_id)
+        except Exception as save_err:
+            log_error(save_err, session_id=session_id, run_id=run_id,
+                      pipeline_step="save_report", user_inputs=_user_inputs,
+                      app_version=VERSION)
+            report_path = None
 
-    st.session_state.result = result
-    st.session_state.report_path = report_path
-    st.session_state.current_run_id = run_id
+        if run_id:
+            complete_run(run_id, result["timing"])
+            if report_path:
+                save_report_to_db(run_id, result["analysis"], result["search_queries"],
+                                  os.path.basename(report_path))
+            log_user_event(session_id, "report_viewed", run_id=run_id)
 
-    with open(report_path, "r", encoding="utf-8") as f:
-        st.session_state.report_md = f.read()
+        st.session_state.result = result
+        st.session_state.report_path = report_path
+        st.session_state.current_run_id = run_id
+
+        if report_path:
+            with open(report_path, "r", encoding="utf-8") as f:
+                st.session_state.report_md = f.read()
+        else:
+            st.session_state.report_md = result.get("analysis", "")
+
+    except Exception as pipeline_err:
+        log_error(pipeline_err, session_id=session_id, run_id=run_id,
+                  pipeline_step="pipeline", user_inputs=_user_inputs,
+                  app_version=VERSION)
+        if run_id:
+            mark_run_failed(run_id, pipeline_err)
+
+        st.error(
+            "Something went wrong during the analysis. The error has been logged "
+            "and will be investigated. Please try again — transient issues often "
+            "resolve on retry."
+        )
+        st.caption(f"Error reference: `{run_id or 'no-run-id'}`")
+        log_user_event(session_id, "pipeline_error", run_id=run_id,
+                       event_data={"error_type": type(pipeline_err).__name__,
+                                   "error_message": str(pipeline_err)[:500]})
 
 
 # ── Display results ───────────────────────────────────────────────────────────
@@ -379,10 +423,12 @@ if result:
 
     col_dl, col_path = st.columns([1, 3])
     with col_dl:
+        dl_filename = (os.path.basename(st.session_state.report_path)
+                       if st.session_state.report_path else "compliance_report.md")
         downloaded = st.download_button(
             "⬇️ Download Report (.md)",
             data=st.session_state.report_md,
-            file_name=os.path.basename(st.session_state.report_path),
+            file_name=dl_filename,
             mime="text/markdown",
         )
         if downloaded:
@@ -390,10 +436,11 @@ if result:
                 st.session_state.supabase_session_id,
                 "report_downloaded",
                 run_id=st.session_state.get("current_run_id"),
-                event_data={"filename": os.path.basename(st.session_state.report_path)},
+                event_data={"filename": dl_filename},
             )
     with col_path:
-        st.caption(f"Saved to `{st.session_state.report_path}`")
+        if not st.session_state.report_path:
+            st.caption("⚠️ Local save failed — report available via download only")
 
 elif not run_btn:
     st.info(
