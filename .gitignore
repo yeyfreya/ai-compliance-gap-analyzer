@@ -36,15 +36,25 @@ desktop.ini
 # Chat transcripts (kept locally, not published)
 docs/dev-logs/transcripts/
 
+# Dev logs (session-level notes — kept locally, iteration docs are the public story)
+docs/dev-logs/
+
 # Local-only reference docs
 docs/DOCUMENTATION-SYSTEM-MAP.md
 docs/PROJECT-SCHEMA.md
 
+# Scratch test files (v0.1 API smoke tests — not real tests)
+test_all.py
+test_api.py
+test_tavily.py
+
 # Reports — keep locally, only showcase examples are tracked
 reports/report_*.md
-!reports/report_v0.5_20260228_2227_4-ai-diagnostic-assistant-that.md
-!reports/report_v0.5_20260228_2229_4-ai-agent-powered-compliance.md
-!reports/report_v0.5_3-ai-credit-scoring-model-that-evaluates-loan-applications_20260228_221051.md
+reports/test_report.md
+reports/test_correlation_report.md
+!reports/report_healthcare.md
+!reports/report_regtech.md
+!reports/report_fintech.md
 
 # Streamlit
 .streamlit/secrets.toml

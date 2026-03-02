@@ -1,108 +1,97 @@
 # AI Compliance Gap Analyzer
 
-An intelligent AI agent that analyzes AI implementations for regulatory compliance gaps and risks.
+**Quickly see the potential compliance gaps between your AI technology and your industry's regulatory requirements.**
 
-> **Status:** v0.5 — Active development. [**Live Demo**](https://ai-compliance-gap-analyzer.streamlit.app/) available. CLI pipeline also supported.
+Built for early-stage AI startups who don't have the resources for expensive legal or compliance services. Describe your AI use case, your tech stack, and your industry — the agent researches relevant regulations, cross-references them against your technology's obligations, and delivers a clear, scannable gap report in about a minute.
 
-## Overview
+> **[Try the Live Demo →](https://ai-compliance-gap-analyzer.streamlit.app/)**
+>
+> No sign-up. No API keys. Just pick a scenario or enter your own.
 
-Helps organizations identify compliance risks when deploying AI systems. Given a use case, technology stack, and industry context, the agent autonomously:
+![AI Compliance Gap Analyzer — live demo screenshot](assets/screenshot.jpg)
 
-1. **Plans research** - Determines relevant compliance frameworks and vendor policies to investigate
-2. **Conducts research** - Searches the web for regulatory requirements and technical documentation
-3. **Analyzes gaps** - Identifies discrepancies between requirements and current implementation
-4. **Provides recommendations** - Generates actionable compliance advice
-5. **Saves report** - Persists a version-tagged markdown report for audit trail
+---
 
-### How It Works
+## What You Get
+
+A structured compliance gap report covering:
+
+- **Compliance Gap Matrix** — executive summary table with each potential gap, risk level, regulatory basis, and recommended action
+- **Key Regulatory Landscape** — which frameworks and requirements apply to your case
+- **Gap Details** — what each gap means and why it matters, framed as areas worth confirming (never assumptions about what you have or haven't done)
+- **Recommended Next Steps** — grouped by priority so you know where to start
+- **Bottom Line** — a concise takeaway you can act on immediately
+
+Reports use a warm, supportive tone — like a knowledgeable friend pointing out things you might want to look into, not an auditor issuing violations.
+
+> Showcase reports are included in the repo — see [`reports/`](reports/) for examples across healthcare, fintech, and RegTech.
+
+---
+
+## How It Works
 
 ```
-User Input (use_case, technology, industry)
-    │
-    ▼
-plan_searches() ──► Claude generates 3-5 search queries
-    │
-    ▼
-conduct_research() ──► Tavily executes each query (max 3 results each)
-    │
-    ▼
-analyze_compliance() ──► Claude analyzes all findings
-    │
-    ▼
-save_report() ──► Markdown file saved to reports/
-    │
-    ▼
-append_test_log() ──► Row appended to reports/test-log.csv
+You describe your AI system          The agent researches regulations
+   (use case + tech + industry)         and cross-references gaps
+           │                                      │
+           ▼                                      ▼
+   ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+   │  You provide   │───▶│  Agent plans  │───▶│  Agent writes │
+   │  3 inputs      │    │  & researches │    │  your report  │
+   └───────────────┘    └───────────────┘    └───────────────┘
+                                                    │
+                                                    ▼
+                                          Compliance gap report
+                                          ready in ~1 minute
 ```
 
-## Example Analysis
+---
+
+## Example
 
 **Input:**
 - Use case: "AI-powered resume screening tool"
 - Technology: "OpenAI GPT-4 API"
 - Industry: "Enterprise HR (US-based)"
 
-**Output:**
-- **Compliance Gap Matrix** — executive summary table with potential gap, risk level, regulatory basis, and recommended action
-- Key regulatory landscape (applicable frameworks and requirements)
-- Gap details with analysis (what each gap means and why it matters)
-- Recommended next steps grouped by priority
-- Bottom line (concise takeaway for founders)
+**What the report covers:**
+- Employment discrimination law (Title VII, ADA, state AI hiring laws)
+- AI transparency and explainability requirements
+- Data privacy obligations (CCPA, EEOC guidance)
+- Vendor-specific compliance (OpenAI's usage policies for HR decisions)
+- Bias testing and adverse impact analysis gaps
 
-Showcase reports are included in the repo — see [`reports/`](reports/) for examples across healthcare, fintech, and RegTech. Or [try the live demo](https://ai-compliance-gap-analyzer.streamlit.app/) to generate your own.
+---
 
-## Tech Stack
+## What's Coming Next
 
-- **AI Orchestration:** Claude Sonnet 4.5 (Anthropic API) with Extended Thinking
-- **Web Research:** Tavily API
-- **AI Observability:** Langfuse (traces, thinking, tokens, cost)
-- **Database:** Supabase (user tracking, report persistence)
-- **Frontend:** Streamlit
-- **Language:** Python 3.14
-- **Architecture:** Multi-step agentic workflow
+- Consistent report structure enforcement (full template)
+- PDF report generation
+- Research adequacy loop (agent validates its own research before writing)
+- Plugin version for AI agent platforms (OpenClaw and similar)
 
-## Project Structure
+---
 
-```
-ai-compliance-gap-analyzer/
-├── agent.py              # Main orchestrator (pipeline + test scenarios + timing + Langfuse)
-├── streamlit_app.py      # Streamlit web UI (user event tracking)
-├── tracking.py           # Supabase tracking (sessions, runs, events, reports)
-├── sync_reports.py       # Pull cloud reports from Supabase to local reports/
-├── test_tracking.py      # Integration tests (Supabase, Langfuse, parent trace, run_id)
-├── tools.py              # Tavily web search and result formatting
-├── prompts.py            # AI prompts for planning and analysis (with reasoning)
-├── supabase_schema.sql   # Database schema (run in Supabase SQL Editor)
-├── requirements.txt      # Python dependencies
-├── CHANGELOG.md          # Version history
-├── .streamlit/
-│   └── config.toml       # Streamlit theme (dark mode)
-├── reports/              # Generated compliance analysis reports
-│   ├── report_*.md       # Showcase reports (3 tracked; rest are local-only)
-│   └── test-log.csv      # Centralized performance log (local backup)
-├── docs/                 # Project documentation
-│   ├── DOCUMENTATION-GUIDE.md   # Documentation conventions
-│   ├── BRANCHING-GUIDE.md       # Git branching workflow (main/dev, PRs, tags)
-│   ├── iterations/              # One file per version — full analysis story
-│   └── dev-logs/                # Session summaries
-└── .env                  # API keys (not committed)
-```
+## Run It Locally
 
-## Installation
+### Prerequisites
+
+- Python 3.14+
+- [Anthropic API key](https://console.anthropic.com/)
+- [Tavily API key](https://tavily.com/)
+
+### Setup
 
 ```bash
-# Clone repository
 git clone https://github.com/yeyfreya/ai-compliance-gap-analyzer.git
 cd ai-compliance-gap-analyzer
 
-# Create and activate virtual environment
 python -m venv venv
 # Windows:
 venv\Scripts\activate
 # macOS/Linux:
 source venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -113,11 +102,7 @@ ANTHROPIC_API_KEY = <your-anthropic-key>
 TAVILY_API_KEY   = <your-tavily-key>
 ```
 
-## Usage
-
-**Try the live demo:** [ai-compliance-gap-analyzer.streamlit.app](https://ai-compliance-gap-analyzer.streamlit.app/)
-
-**Or run locally:**
+### Web UI
 
 ```bash
 python -m streamlit run streamlit_app.py
@@ -125,13 +110,13 @@ python -m streamlit run streamlit_app.py
 
 Opens at `http://localhost:8501`. Pick a preset scenario or enter custom inputs, then click **Run Analysis**.
 
-**Or run from CLI:**
+### CLI
 
 ```bash
 python agent.py <scenario>
 ```
 
-Available scenarios: `hr`, `healthcare`, `fintech`, `education`, `regtech`
+Available scenarios:
 
 ```bash
 python agent.py hr          # AI resume screening — US employment law
@@ -141,57 +126,35 @@ python agent.py education   # AI essay grading — FERPA, COPPA
 python agent.py regtech     # AI compliance analyzer — RegTech SaaS
 ```
 
-Each run generates a timestamped report in `reports/` and appends performance data to `reports/test-log.csv`.
+---
 
-## Known Issues (v0.5)
+## Built With
 
+Claude Sonnet 4.5 (Anthropic) · Tavily · Langfuse · Supabase · Streamlit · Python
+
+---
+
+## Current Status
+
+**v0.5.1** — Active development. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for technical decisions.
+
+**Known limitations:**
 - Analysis usually takes about a minute but can vary for complex or region-specific cases
 - Minor formatting inconsistencies between reports (section styling may vary slightly)
-- Linear pipeline only (no research adequacy validation loop yet)
-- Supabase RLS disabled (acceptable for portfolio project; needs RLS for production)
-- Individual search failures within `conduct_research()` are silently swallowed (logged but not surfaced)
-
-All critical/high bugs from v0.1–v0.4 have been fixed.
-See [v0.5 iteration doc](docs/iterations/v0.5-error-handling-and-rate-limiting.md) for full details.
-
-## Roadmap
-
-- [x] Core agent logic
-- [x] Autonomous research planning
-- [x] Multi-source web search
-- [x] Compliance gap analysis
-- [x] Report persistence with version tagging
-- [x] Bug fixes (data loss, truncation, error handling)
-- [x] Input validation
-- [x] Test scenario runner with CLI
-- [x] Per-step timing and AI observability logging
-- [x] Streamlit web interface
-- [x] Compliance Gap Matrix (mandatory first section)
-- [x] Usage tracking & report persistence (Supabase)
-- [x] AI agent observability (Langfuse — traces, extended thinking, tokens, cost)
-- [x] Extended Thinking (Claude's internal reasoning captured and logged)
-- [x] Cross-service correlation (`run_id` links local reports ↔ Supabase ↔ Langfuse)
-- [x] Cloud report sync (`sync_reports.py` pulls Supabase reports to local)
-- [x] Structured error logging (Supabase `error_logs` table with full context)
-- [x] Retry logic for transient API errors (Claude + Tavily)
-- [x] Rate limiting (invisible per-session limit, budget protection)
-- [ ] Consistent detailed report structure (full template enforcement)
-- [ ] Pipeline → agent loop (research adequacy check)
-- [ ] PDF report generation
-- [x] Cloud deployment (Streamlit Cloud)
-- [ ] OpenClaw plugin version (v2)
-
-## Development
+- Linear pipeline (no research adequacy validation loop yet)
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and [docs/iterations/](docs/iterations/) for detailed analysis per version.
-See [docs/BRANCHING-GUIDE.md](docs/BRANCHING-GUIDE.md) for git workflow (main/dev, PRs, tags).
 
-**Current version:** v0.5 — Error Handling, Error Logging & Rate Limiting ([full iteration doc](docs/iterations/v0.5-error-handling-and-rate-limiting.md))
+---
 
-## License
+## Contributing
 
-MIT
+See the [project structure](docs/DOCUMENTATION-GUIDE.md) and [branching guide](docs/BRANCHING-GUIDE.md) for how the codebase and git workflow are organized.
+
+---
 
 ## Author
 
-Freya Ye Yu - [LinkedIn](https://www.linkedin.com/in/yeyufreya/) - [Portfolio](https://www.yeyufreya.com/)
+**Freya Ye Yu** — [LinkedIn](https://www.linkedin.com/in/yeyufreya/) · [Portfolio](https://www.yeyufreya.com/)
+
+MIT License

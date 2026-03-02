@@ -19,8 +19,11 @@ ai-compliance-gap-analyzer/
 ├── supabase_schema.sql      # Database schema (run in Supabase SQL Editor)
 ├── requirements.txt         # Python dependencies
 ├── CHANGELOG.md             # Version history (summary per version)
-├── .gitignore               # Protects .env, .cursor/, transcripts, etc.
+├── .gitignore               # Protects .env, .cursor/, transcripts, dev-logs, etc.
 ├── .streamlit/config.toml   # Streamlit theme (dark mode)
+│
+├── assets/                  # Static assets (screenshot, etc.)
+│   └── screenshot.jpg       # README hero image
 │
 ├── .cursor/rules/           # Cursor rules (committed to git)
 │   ├── documentation-system.mdc   # Auto-read docs before working
@@ -28,18 +31,20 @@ ai-compliance-gap-analyzer/
 │   └── pre-commit-review.mdc      # Pre-commit checklist for agents
 │
 ├── reports/                  # Generated compliance analysis reports
-│   ├── report_v<VERSION>_<YYYYMMDD_HHMM>_<slug>.md
+│   ├── report_<scenario>.md  # Showcase reports (tracked in git: healthcare, fintech, regtech)
+│   ├── report_v<VERSION>_<YYYYMMDD_HHMM>_<slug>.md  # Auto-generated (gitignored)
 │   └── test-log.csv          # Centralized performance log (AI observability)
 │
 └── docs/
     ├── DOCUMENTATION-GUIDE.md    # THIS FILE — how to document everything
+    ├── ARCHITECTURE.md           # Public — system design and technical decisions
     ├── BRANCHING-GUIDE.md        # Git branching workflow (main/dev, PRs, tags)
     ├── PROJECT-SCHEMA.md         # LOCAL ONLY — project vision, strategy, sourced quotes
     │
     ├── iterations/               # One file per version — the full story
     │   └── v<VERSION>-<short-description>.md
     │
-    └── dev-logs/                 # Chat session summaries
+    └── dev-logs/                 # LOCAL ONLY — chat session summaries
         ├── v<VERSION>_<YYYY-MM-DD>_<HHMM>_<short-topic>.md
         │
         └── transcripts/         # LOCAL ONLY — not tracked in git
@@ -141,10 +146,15 @@ Example: `report_v0.5_20260228_2133_ai-diagnostic-assistant.md`
 - The `version` parameter is passed through `run_analysis()`
 - When bumping versions, update the default version string in code
 
+### Showcase Reports
+
+2–3 curated reports are tracked in git with clean names: `report_healthcare.md`, `report_fintech.md`, `report_regtech.md`. These are the public-facing examples visitors see in the repo.
+
+When a new version significantly improves report quality, replace the showcase reports with better examples and keep the clean filenames.
+
 ### Rules
 - Never delete old reports locally — they document what each code version produced
-- **Most reports are gitignored** (`reports/report_*.md` in `.gitignore`). Only 2–3 curated "showcase" reports are tracked in git — these are un-ignored with `!` lines in `.gitignore`
-- When a new version significantly improves report quality, consider swapping showcase reports to reflect the latest version
+- **Most reports are gitignored** (`reports/report_*.md` in `.gitignore`). Showcase reports are un-ignored with `!` lines
 - `test-log.csv` is always tracked (not gitignored)
 
 ---
@@ -196,9 +206,11 @@ Since v0.4–v0.5, several of these have been implemented:
 
 ---
 
-## 5. Dev Logs (`docs/dev-logs/`)
+## 5. Dev Logs (`docs/dev-logs/`) — LOCAL ONLY
 
 **One summary per chat session.** Documents questions asked, answers given, and decisions made.
+
+> **Not tracked in git.** Dev logs are kept locally for personal reference. The iteration docs (`docs/iterations/`) are the public-facing development story.
 
 ### Naming
 `v<VERSION>_<YYYY-MM-DD>_<HHMM>_<short-topic>.md`
@@ -283,19 +295,33 @@ This file summarizes the "big picture" by pulling sourced quotes directly from c
 
 ## 8. README.md (Root)
 
-**The public-facing overview of the project.** Must stay accurate as the project evolves.
+**The public-facing landing page for the product.** Written for visitors and potential users, not developers. Must stay accurate as the project evolves.
 
-### What README.md Contains
+### README Structure (top to bottom)
 
-- Project status line with current version
-- Overview and architecture diagram
-- Example analysis input/output
-- Tech stack
-- Project structure tree
-- Installation and usage instructions
-- Known Issues section (reflects current version)
-- Roadmap with checked/unchecked items
-- Current version line with link to iteration doc
+The README is structured product-first, developer-second:
+
+1. **Product name + value proposition** — one-line pitch
+2. **Who it's for + what it does** — short paragraph
+3. **Live demo link** — prominent, no-friction call to action
+4. **Screenshot** — hero image of the UI/report (when available)
+5. **What You Get** — describes the report output (sections, tone, value)
+6. **How It Works** — user-experience flow (not code/implementation flow)
+7. **Example** — sample input and what the report covers
+8. **What's Coming Next** — product-facing roadmap (features users care about)
+9. **Run It Locally** — installation + web UI + CLI usage (developer section)
+10. **Built With** — one-line tech credits
+11. **Current Status** — version, known limitations (user-facing framing)
+12. **Contributing** — links to docs and branching guide
+13. **Author** — name, links, license
+
+### Voice & Framing Rules
+
+- **Product voice, not technical spec.** The README should feel like the same product that writes the reports — warm, clear, empowering.
+- **Speak to founders, not "organizations."** The target user is an early-stage AI startup founder.
+- **Don't expose implementation internals.** No function names, no "Claude generates queries", no code-level flow diagrams. Show the user experience, not the architecture.
+- **Known limitations, not known issues.** Frame current gaps as user-facing limitations, not internal bug tracker items. No "Supabase RLS disabled" or "silently swallowed errors."
+- **Roadmap = product features, not dev checkboxes.** Show what's coming for users, not what was fixed internally.
 
 ### When to Update README.md
 
@@ -303,20 +329,20 @@ Update the README whenever any of these change:
 
 | Trigger | What to Update in README |
 |---|---|
-| **New version started** | Status line (`v0.X`), "Current version" line at bottom, Known Issues section |
-| **Bug fixed or feature added** | Known Issues (remove fixed items), Roadmap (check off completed items) |
-| **New file added to project** | Project Structure tree |
-| **Architecture changed** | Overview diagram, Tech stack if applicable |
-| **New known issues found** | Known Issues section |
+| **New version started** | Current Status section (version, known limitations) |
+| **Bug fixed or feature added** | Known limitations (remove fixed items), What's Coming Next |
+| **Architecture changed** | Built With if applicable |
+| **New known limitations found** | Current Status section |
 | **Repo renamed or clone URL changed** | Installation section (git clone URL) |
-| **Product behavior changed** | Example output, Known Issues, any prose describing how the tool works (timing, report format, terminology) |
+| **Product behavior changed** | What You Get, Example, any prose describing how the tool works (timing, report format, terminology) |
+| **Screenshot updated** | Replace screenshot image |
 
 ### Rules
-- Keep the README concise — it's a landing page, not deep documentation
-- Known Issues should reflect the **current** version only (not historical); link to the iteration doc for the full list
-- Roadmap checkboxes should match actual project state
-- The "Current version" line at the bottom must match the version in `agent.py`
-- **Content accuracy matters:** When product behavior changes (report format, timing, terminology, output structure), scan the full README for stale descriptions — not just version numbers. Example output sections and Known Issues are especially prone to going stale.
+- Keep the README concise — it's a product landing page, not deep documentation
+- Known limitations should reflect the **current** version only (not historical); link to the iteration doc for the full list
+- The version in Current Status must match the version in `agent.py`
+- **Content accuracy matters:** When product behavior changes (report format, timing, terminology, output structure), scan the full README for stale descriptions — not just version numbers
+- **Project structure, file-level details, and internal architecture belong in `docs/DOCUMENTATION-GUIDE.md`**, not the README
 - When in doubt, update it — a stale README is worse than a slightly verbose one
 
 ---
