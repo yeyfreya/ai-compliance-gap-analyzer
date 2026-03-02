@@ -19,6 +19,18 @@ When the user describes what they want, do NOT silently interpret, downgrade, or
 - BAD: "I'm realizing the user probably just wants X" → proceeds with X
 - GOOD: "You mentioned X — do you mean [option A] or [option B]?" → waits for answer
 
+### Present Judgments Before Acting
+
+Whenever you make a judgment about what should be changed — whether the user asked you to "check", "fix", "improve", "clean up", or anything else:
+
+1. **Present your assessment first.** What you found, what you think should change, and why.
+2. **Wait for the user to confirm** before making edits. They may disagree, want to handle some items differently, or decide certain things are fine as-is.
+3. **The only exception is when the user gives an explicit, unambiguous instruction** with no judgment required (e.g., "rename this variable to X", "add a screenshot to the README"). If you have to decide *what* to change, present first.
+
+- BAD: Agent finds 4 issues → fixes all 4 in the same response
+- GOOD: Agent finds 4 issues → presents them → asks "which of these do you want me to change?"
+- EXCEPTION: "Add this screenshot to the README" → no judgment needed, just do it
+
 ## 2. Surface Architectural Root Causes
 
 When investigating a problem or implementing a feature, always look for the deeper architectural issue before patching the symptom.

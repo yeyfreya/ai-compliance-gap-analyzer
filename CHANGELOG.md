@@ -5,10 +5,31 @@ Each version represents an iteration, including what was analyzed, what changed,
 
 ---
 
+## [v0.5.1] - 2026-03-01 — README, Repo Cleanup & Architecture Doc
+
+### Summary
+Restructured the repo and documentation for public clarity. README rewritten as a
+product-focused landing page. Technical decisions documented in a new ARCHITECTURE.md.
+Removed unused test files and debug artifacts. Showcase reports renamed for readability.
+
+### What Changed
+- **README rewritten** (`README.md`): Product-first structure — value prop, target user, live demo, screenshot, report description, user-experience flow, example, roadmap. Installation and tech details moved lower
+- **Architecture doc** (`docs/ARCHITECTURE.md`): New document covering system design, key technical decisions, and their reasoning — frontend-agnostic pipeline, three-layer error tracing, cross-service correlation, rate limiting design, Extended Thinking, report voice
+- **Screenshot added** (`assets/screenshot.jpg`): Hero image of the live demo in README
+- **Unused files removed from tracking**: `test_all.py`, `test_api.py`, `test_tavily.py` (v0.1 API smoke tests, superseded by `test_tracking.py`)
+- **Test artifacts removed from tracking**: `reports/test_report.md`, `reports/test_correlation_report.md`
+- **Showcase reports renamed**: `report_healthcare.md`, `report_fintech.md`, `report_regtech.md` (clean scenario-based names)
+- **Dev logs moved to local-only**: `docs/dev-logs/` gitignored — iteration docs remain the public development history
+- **Documentation guide updated** (`docs/DOCUMENTATION-GUIDE.md`): Section 8 rewritten for new README structure and voice guidelines
+
+Full details: [docs/iterations/v0.5-error-handling-and-rate-limiting.md](docs/iterations/v0.5-error-handling-and-rate-limiting.md)
+
+---
+
 ## [v0.5] - 2026-02-28 — Error Handling, Error Logging & Rate Limiting
 
 ### Summary
-Pre-LinkedIn-launch hardening: structured error logging to Supabase, try/except around
+Production hardening: structured error logging to Supabase, try/except around
 the full pipeline (no more raw tracebacks for users), retry logic for transient API
 errors, and invisible per-session rate limiting to protect API budget without adding
 user friction.
@@ -17,7 +38,7 @@ user friction.
 - **Retry logic** (`agent.py`, `tools.py`): `_retry_api_call()` retries once with backoff on transient Claude errors (rate limits, timeouts, 500s). Tavily `search_web()` also retries once on failure
 - **Error logging** (`tracking.py`, `supabase_schema.sql`): New `error_logs` table with error type, message, traceback, pipeline step, user inputs, session/run correlation. New `log_error()` and `mark_run_failed()` functions
 - **Pipeline error handling** (`streamlit_app.py`): Full try/except around `_run_pipeline()` — logs error to Supabase, marks run as failed, shows friendly message with run_id reference. Separate try/except for `save_report()` with in-memory fallback
-- **Rate limiting** (`tracking.py`, `streamlit_app.py`): Invisible per-session limit (3 analyses). Counts via Supabase query. Friendly limit message with LinkedIn lead-gen link. Defaults to allowing if Supabase is down
+- **Rate limiting** (`tracking.py`, `streamlit_app.py`): Invisible per-session limit (3 analyses). Counts via Supabase query. Friendly limit message with contact link. Defaults to allowing if Supabase is down
 - **Report restructure** (`prompts.py`, `agent.py`): Concise 5-section format (Gap Matrix → Regulatory Landscape → Gap Details → Next Steps → Bottom Line). Removed Agent Reasoning section. Reduced `max_tokens` 16000→8000, thinking budget 8000→4000. Target: 150–250 lines, under 2 min
 - **Report voice** (`prompts.py`): Gentle advisor tone, "potential gaps" language, no assumptions about user's product, no fear-based language. Aligned with product name
 - **UI polish** (`streamlit_app.py`): Timer "Usually about a minute", removed local file path from UI
